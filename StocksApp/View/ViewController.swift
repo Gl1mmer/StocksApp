@@ -4,64 +4,108 @@
 //
 //  Created by Amankeldi Zhetkergen on 09.11.2024.
 //
-
 import UIKit
 
 final class ViewController: UIViewController {
-    
-    private let searchTextField: UITextField = {
-        let tf = UITextField()
-        tf.attributedPlaceholder = NSAttributedString(string: "Find company or ticker", attributes: [.foregroundColor: UIColor(red: 26/255, green: 26/255, blue: 26/255, alpha: 1), .font: UIFont.systemFont(ofSize: 14, weight: .regular)])
-        tf.borderStyle = .none
-        tf.layer.borderColor = UIColor.black.cgColor
-        tf.layer.borderWidth = 1.0
-        tf.layer.cornerRadius = 25.0
-        
-        let shiftingView = UIView(frame: CGRect(x: 0, y: 0, width: 40, height: tf.frame.height))
-        let glassImage = UIImageView(image: UIImage(systemName: "magnifyingglass"))
-        glassImage.frame = CGRect(x: 0, y: 0, width: 24, height: 24)
-        glassImage.tintColor = .black
-        glassImage.contentMode = .scaleAspectFit
-        glassImage.center = shiftingView.center
-        shiftingView.addSubview(glassImage)
-        tf.leftView = shiftingView
-        tf.leftViewMode = .always
-        
-        tf.clipsToBounds = true
-        tf.translatesAutoresizingMaskIntoConstraints = false
-        return tf
-    }()
+    private let searchTextField = CustomSearchBar()
     
     private let companiesTableView: UITableView = {
         let tv = UITableView()
-        tv.backgroundColor = .systemGray5
+        tv.backgroundColor = .white
+        tv.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
+        tv.allowsSelection = false
         tv.translatesAutoresizingMaskIntoConstraints = false
         return tv
+    }()
+    
+    private let buttonsView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private lazy var stocksButton: UIButton = {
+        let button  = UIButton()
+        button.setTitle("Stocks", for: .normal)
+        button.setTitleColor(.black, for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 28, weight: .bold)
+        button.addTarget(self, action: #selector(stocksButtonTapped), for: .touchUpInside)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    private lazy var favouriteButton: UIButton = {
+        let button  = UIButton()
+        button.setTitle("Favourite", for: .normal)
+        button.setTitleColor(.black, for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 18, weight: .regular)
+        button.addTarget(self, action: #selector(favouritesButtonTapped), for: .touchUpInside)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
     }()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
         setupUI()
+        tableViewDelegateConfiguration()
     }
     
     private func setupUI() {
         view.addSubview(searchTextField)
         view.addSubview(companiesTableView)
-        
+        view.addSubview(buttonsView)
+        buttonsView.addSubview(stocksButton)
+        buttonsView.addSubview(favouriteButton)
+                
         NSLayoutConstraint.activate([
             searchTextField.topAnchor.constraint(equalTo: view.topAnchor, constant: 68),
             searchTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             searchTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             searchTextField.heightAnchor.constraint(equalToConstant: 48),
             
-            companiesTableView.topAnchor.constraint(equalTo: searchTextField.bottomAnchor, constant: 18),
+            buttonsView.topAnchor.constraint(equalTo: searchTextField.bottomAnchor, constant: 10),
+            buttonsView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            buttonsView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            buttonsView.heightAnchor.constraint(equalToConstant: 42),//32
+            
+            stocksButton.leadingAnchor.constraint(equalTo: buttonsView.leadingAnchor),
+            stocksButton.bottomAnchor.constraint(equalTo: buttonsView.bottomAnchor, constant: 0),
+            
+            favouriteButton.leadingAnchor.constraint(equalTo: stocksButton.trailingAnchor, constant: 10),
+            favouriteButton.bottomAnchor.constraint(equalTo: buttonsView.bottomAnchor, constant: 0),
+
+            companiesTableView.topAnchor.constraint(equalTo: buttonsView.bottomAnchor, constant: 18),
             companiesTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             companiesTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             companiesTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
     }
 
+    private func tableViewDelegateConfiguration() {
+        companiesTableView.delegate = self
+        companiesTableView.dataSource = self
+    }
+    
+    @objc private func stocksButtonTapped() {
+        stocksButton.titleLabel?.font = .systemFont(ofSize: 28, weight: .bold)
+        favouriteButton.titleLabel?.font = .systemFont(ofSize: 18, weight: .regular)
+    }
 
+    @objc private func favouritesButtonTapped() {
+        favouriteButton.titleLabel?.font = .systemFont(ofSize: 28, weight: .bold)
+        stocksButton.titleLabel?.font = .systemFont(ofSize: 18, weight: .regular)
+    }
 }
 
+extension ViewController: UITableViewDelegate, UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return 10
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
+        cell.textLabel?.text = "Row \(indexPath.row)"
+        return cell
+    }
+}
