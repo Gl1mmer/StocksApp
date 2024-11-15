@@ -14,13 +14,14 @@ protocol StockCellDelegate: AnyObject {
 class StockCell: UITableViewCell {
     static let identifier = String(describing: StockCell.self)
     
-    var delegate: StockCellDelegate?
+    weak var delegate: StockCellDelegate?
     
-    private let companySymbolImageView: UIImageView = {
+    private var companySymbolImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage(named: "yandex")
+        imageView.image = UIImage(systemName: "questionmark")
         imageView.contentMode = .scaleAspectFit
         imageView.layer.cornerRadius = 12
+        imageView.backgroundColor = .systemGray5
         imageView.clipsToBounds = true
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
@@ -28,7 +29,7 @@ class StockCell: UITableViewCell {
     
     private let companyNameLabel: UILabel = {
         let label = UILabel()
-        label.text = "YNDX"
+        label.text = "Default"
         label.font = .systemFont(ofSize: 18, weight: .bold)
         label.textColor = .label
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -46,7 +47,7 @@ class StockCell: UITableViewCell {
     
     private let companyAddInfoLabel: UILabel = {
         let label = UILabel()
-        label.text = "Yandex, LLC"
+        label.text = "Default"
         label.font = .systemFont(ofSize: 11, weight: .regular)
         label.textColor = .label
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -55,16 +56,16 @@ class StockCell: UITableViewCell {
     
     private let currentPriceLabel: UILabel = {
         let label = UILabel()
-        label.text = "4 764,6 ₽"
+        label.text = "???"
         label.font = .systemFont(ofSize: 18, weight: .bold)
-        label.textColor = .label
+        label.textColor = .black
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
     
     private let dayDeltaLabel: UILabel = {
         let label = UILabel()
-        label.text = "+55 ₽ (1,15%)"
+        label.text = "???"
         label.font = .systemFont(ofSize: 12, weight: .regular)
         label.textColor = .green
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -82,28 +83,30 @@ class StockCell: UITableViewCell {
         fatalError("Error: init(coder:) has not been implemented")
     }
     
-    func configure(index: Int) {
-        if index % 2 == 0 {
-            backgroundColor = .systemGray6
-        }
+    func configure(info: StockModel, index: Int) {
+        backgroundColor = (index % 2 == 0) ? .systemGray6 : .white 
+        companySymbolImageView.image = info.logo
+        companyNameLabel.text = info.ticker
+        companyAddInfoLabel.text = info.name
+        guard let currentPrice = info.price, let dayDelta = info.change, let changePercentage = info.changePercent else { return }
+        currentPriceLabel.text = String(format: "$%.2f", currentPrice)
+        dayDeltaLabel.textColor = (dayDelta > 0) ? .systemGreen : .systemRed
+        dayDeltaLabel.text = (dayDelta > 0) ? String(format: "+$%.2f (%.2f%%)", abs(dayDelta), abs(changePercentage)) : String(format: "-$%.2f (%.2f%%)", abs(dayDelta), abs(changePercentage))
+
     }
     
     @objc private func favoriteButtonTapped() {
-        if (favoriteButton.tintColor == .systemGray4) {
-            favoriteButton.tintColor = .systemOrange
-        } else {
-            favoriteButton.tintColor = .systemGray4
-        }
+        favoriteButton.tintColor = (favoriteButton.tintColor == .systemGray4) ? .systemOrange : .systemGray4
         delegate?.favoriteButtonTapped()
     }
 
     private func setupUI() {
-        addSubview(companySymbolImageView)
-        addSubview(companyNameLabel)
+        contentView.addSubview(companySymbolImageView)
+        contentView.addSubview(companyNameLabel)
         contentView.addSubview(favoriteButton)
-        addSubview(companyAddInfoLabel)
-        addSubview(currentPriceLabel)
-        addSubview(dayDeltaLabel)
+        contentView.addSubview(companyAddInfoLabel)
+        contentView.addSubview(currentPriceLabel)
+        contentView.addSubview(dayDeltaLabel)
         
         NSLayoutConstraint.activate([
             companySymbolImageView.topAnchor.constraint(equalTo: topAnchor, constant: 8),

@@ -6,8 +6,10 @@
 //
 import UIKit
 
-final class ViewController: UIViewController {
+final class StocksViewController: UIViewController {
     private let searchTextField = CustomSearchBar()
+    
+    let model = StocksViewModel()
     
     private let companiesTableView: UITableView = {
         let tv = UITableView()
@@ -47,6 +49,11 @@ final class ViewController: UIViewController {
         view.backgroundColor = .white
         setupUI()
         tableViewDelegateConfiguration()
+        model.fetchStocks()
+        
+        model.isFetchingEnded = {
+            self.companiesTableView.reloadData()
+        }
     }
     
     private func setupUI() {
@@ -100,16 +107,16 @@ final class ViewController: UIViewController {
     }
 }
 
-extension ViewController: UITableViewDelegate, UITableViewDataSource {
+extension StocksViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 10
+        return model.getStocks().count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: StockCell.identifier, for: indexPath) as? StockCell else {
             fatalError("Could not dequeue cell [1]")
         }
-        cell.configure(index: indexPath.row)
+        cell.configure(info: model.getStocks()[indexPath.row], index: indexPath.row)
         return cell
     }
     
