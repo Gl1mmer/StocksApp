@@ -11,9 +11,7 @@ final class ViewController: UIViewController {
     
     private let companiesTableView: UITableView = {
         let tv = UITableView()
-        tv.backgroundColor = .white
-        tv.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
-        tv.allowsSelection = false
+        tv.register(StockCell.self, forCellReuseIdentifier: StockCell.identifier)
         tv.translatesAutoresizingMaskIntoConstraints = false
         return tv
     }()
@@ -37,8 +35,8 @@ final class ViewController: UIViewController {
     private lazy var favouriteButton: UIButton = {
         let button  = UIButton()
         button.setTitle("Favourite", for: .normal)
-        button.setTitleColor(.black, for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 18, weight: .regular)
+        button.setTitleColor(.systemGray4, for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 18, weight: .bold)
         button.addTarget(self, action: #selector(favouritesButtonTapped), for: .touchUpInside)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
@@ -64,20 +62,20 @@ final class ViewController: UIViewController {
             searchTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             searchTextField.heightAnchor.constraint(equalToConstant: 48),
             
-            buttonsView.topAnchor.constraint(equalTo: searchTextField.bottomAnchor, constant: 10),
+            buttonsView.topAnchor.constraint(equalTo: searchTextField.bottomAnchor, constant: 20),
             buttonsView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             buttonsView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            buttonsView.heightAnchor.constraint(equalToConstant: 42),//32
+            buttonsView.heightAnchor.constraint(equalToConstant: 32),
             
             stocksButton.leadingAnchor.constraint(equalTo: buttonsView.leadingAnchor),
             stocksButton.bottomAnchor.constraint(equalTo: buttonsView.bottomAnchor, constant: 0),
             
-            favouriteButton.leadingAnchor.constraint(equalTo: stocksButton.trailingAnchor, constant: 10),
+            favouriteButton.leadingAnchor.constraint(equalTo: stocksButton.trailingAnchor, constant: 20),
             favouriteButton.bottomAnchor.constraint(equalTo: buttonsView.bottomAnchor, constant: 0),
 
-            companiesTableView.topAnchor.constraint(equalTo: buttonsView.bottomAnchor, constant: 18),
-            companiesTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            companiesTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            companiesTableView.topAnchor.constraint(equalTo: buttonsView.bottomAnchor, constant: 20),
+            companiesTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            companiesTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor,constant: -16),
             companiesTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
     }
@@ -89,12 +87,16 @@ final class ViewController: UIViewController {
     
     @objc private func stocksButtonTapped() {
         stocksButton.titleLabel?.font = .systemFont(ofSize: 28, weight: .bold)
-        favouriteButton.titleLabel?.font = .systemFont(ofSize: 18, weight: .regular)
+        stocksButton.setTitleColor(.black, for: .normal)
+        favouriteButton.titleLabel?.font = .systemFont(ofSize: 18, weight: .bold)
+        favouriteButton.setTitleColor(.systemGray4, for: .normal)
     }
 
     @objc private func favouritesButtonTapped() {
         favouriteButton.titleLabel?.font = .systemFont(ofSize: 28, weight: .bold)
-        stocksButton.titleLabel?.font = .systemFont(ofSize: 18, weight: .regular)
+        favouriteButton.setTitleColor(.black, for: .normal)
+        stocksButton.titleLabel?.font = .systemFont(ofSize: 18, weight: .bold)
+        stocksButton.setTitleColor(.systemGray4, for: .normal)
     }
 }
 
@@ -104,8 +106,14 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
-        cell.textLabel?.text = "Row \(indexPath.row)"
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: StockCell.identifier, for: indexPath) as? StockCell else {
+            fatalError("Could not dequeue cell [1]")
+        }
+        cell.configure(index: indexPath.row)
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        68
     }
 }
