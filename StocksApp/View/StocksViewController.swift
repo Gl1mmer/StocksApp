@@ -7,10 +7,11 @@
 import UIKit
 
 final class StocksViewController: UIViewController {
+    
+    private let model = StocksViewModel()
+
     private let searchTextField = CustomSearchBar()
-    
-    let model = StocksViewModel()
-    
+        
     private let companiesTableView: UITableView = {
         let tv = UITableView()
         tv.register(StockCell.self, forCellReuseIdentifier: StockCell.identifier)
@@ -50,7 +51,7 @@ final class StocksViewController: UIViewController {
         setupUI()
         tableViewDelegateConfiguration()
         model.fetchStocks()
-        
+                
         model.isFetchingEnded = {
             self.companiesTableView.reloadData()
         }
@@ -97,6 +98,8 @@ final class StocksViewController: UIViewController {
         stocksButton.setTitleColor(.black, for: .normal)
         favouriteButton.titleLabel?.font = .systemFont(ofSize: 18, weight: .bold)
         favouriteButton.setTitleColor(.systemGray4, for: .normal)
+        model.showFavoriteStocks(false)
+        companiesTableView.reloadData()
     }
 
     @objc private func favouritesButtonTapped() {
@@ -104,23 +107,35 @@ final class StocksViewController: UIViewController {
         favouriteButton.setTitleColor(.black, for: .normal)
         stocksButton.titleLabel?.font = .systemFont(ofSize: 18, weight: .bold)
         stocksButton.setTitleColor(.systemGray4, for: .normal)
+        model.showFavoriteStocks(true)
+        companiesTableView.reloadData()
     }
 }
 
 extension StocksViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return model.getStocks().count
+        return model.getAllStocks().count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: StockCell.identifier, for: indexPath) as? StockCell else {
             fatalError("Could not dequeue cell [1]")
         }
-        cell.configure(info: model.getStocks()[indexPath.row], index: indexPath.row)
+//        cell.configure(info: model.getStock(index: indexPath.row), index: indexPath.row)
+        cell.configure(info: model.getAllStocks()[indexPath.row], index: indexPath.row)
+        cell.delegate = self
         return cell
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         68
     }
+}
+
+extension StocksViewController: StockCellDelegate {
+    func favoriteButtonTapped(of ticker: String) {
+        model.favoriteButtonTapped(ticker)
+        companiesTableView.reloadData()
+    }
+    
 }

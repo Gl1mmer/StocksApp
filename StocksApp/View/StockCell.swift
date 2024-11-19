@@ -8,7 +8,7 @@
 import UIKit
 
 protocol StockCellDelegate: AnyObject {
-    func favoriteButtonTapped()
+    func favoriteButtonTapped(of ticker: String)
 }
 
 class StockCell: UITableViewCell {
@@ -84,7 +84,7 @@ class StockCell: UITableViewCell {
     }
     
     func configure(info: StockModel, index: Int) {
-        backgroundColor = (index % 2 == 0) ? .systemGray6 : .white 
+        backgroundColor = (index % 2 == 0) ? .systemGray6 : .white
         companySymbolImageView.image = info.logo
         companyNameLabel.text = info.ticker
         companyAddInfoLabel.text = info.name
@@ -92,12 +92,13 @@ class StockCell: UITableViewCell {
         currentPriceLabel.text = String(format: "$%.2f", currentPrice)
         dayDeltaLabel.textColor = (dayDelta > 0) ? .systemGreen : .systemRed
         dayDeltaLabel.text = (dayDelta > 0) ? String(format: "+$%.2f (%.2f%%)", abs(dayDelta), abs(changePercentage)) : String(format: "-$%.2f (%.2f%%)", abs(dayDelta), abs(changePercentage))
+        favoriteButton.tintColor = (info.favorite == false) ? .systemGray4 : .systemOrange
 
     }
     
     @objc private func favoriteButtonTapped() {
-        favoriteButton.tintColor = (favoriteButton.tintColor == .systemGray4) ? .systemOrange : .systemGray4
-        delegate?.favoriteButtonTapped()
+        guard let cellTicker = companyNameLabel.text else { return }
+        delegate?.favoriteButtonTapped(of: cellTicker)
     }
 
     private func setupUI() {

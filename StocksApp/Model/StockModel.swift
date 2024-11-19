@@ -13,6 +13,7 @@ struct StockModel {
     var price: Double?
     var change: Double?
     var changePercent: Double?
+    var favorite: Bool = false
 }
 
 struct StockProfilesModel: Codable {
@@ -25,4 +26,11 @@ struct StockPriceModel: Codable {
     let c: Double
     let d: Double
     let dp: Double
+}
+
+struct PriceReturnModel {
+    let c: Double
+    let d: Double
+    let dp: Double
+    let ticker: String
 }

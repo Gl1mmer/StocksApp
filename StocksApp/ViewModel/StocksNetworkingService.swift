@@ -7,7 +7,7 @@
 
 import UIKit
 
-enum error1: Error {
+enum NetworkingError: Error {
     case couldNotReadLocalJSONFile
     case couldNotDownloadImage
     case couldNotGetPriceInfo
@@ -15,11 +15,11 @@ enum error1: Error {
 }
 
 final class StocksNetworkingService {
-    var stocks: [StockModel] = []
+    private var stocks: [StockModel] = []
     
     func fetchStocks(completion: @escaping (Result<[StockModel], Error>)->Void) {
         guard let data = readLocalJSONFile(forName: "stockProfiles") else {
-            completion(.failure(error1.couldNotReadLocalJSONFile))
+            completion(.failure(NetworkingError.couldNotReadLocalJSONFile))
             return
         }
         let lock = NSLock()
@@ -45,9 +45,9 @@ final class StocksNetworkingService {
                 dg.enter()
                 fetchPriceInfo(of: profile) { result in
                     switch result {
-                    case .success((let c, let d, let dp, let ticker)):
+                    case .success(let res):
                         lock.lock()
-                        self.addPriceInfoToStockModel(price: c, change: d, changePercent: dp, ticker: ticker)
+                        self.addPriceInfoToStockModel(price: res.c, change: res.d, changePercent: res.dp, ticker: res.ticker)
                         lock.unlock()
                     case .failure(let error):
                         print(error)
@@ -63,7 +63,7 @@ final class StocksNetworkingService {
         }
     }
 
-    func readLocalJSONFile(forName name: String) -> Data? {
+    private func readLocalJSONFile(forName name: String) -> Data? {
         do {
             if let filePath = Bundle.main.path(forResource: name, ofType: "json") {
                 let fileUrl = URL(fileURLWithPath: filePath)
@@ -76,10 +76,10 @@ final class StocksNetworkingService {
         return nil
     }
     
-    func downloadImage(from url: StockProfilesModel, completion: @escaping (Result<(UIImage, String), Error>)->Void) {
+    private func downloadImage(from url: StockProfilesModel, completion: @escaping (Result<(UIImage, String), Error>)->Void) {
         let ticker = url.ticker
         guard let url = URL(string: url.logo) else {
-            completion(.failure(error1.InvalidURL))
+            completion(.failure(NetworkingError.InvalidURL))
             return
         }
         let task = URLSession.shared.dataTask(with: url) {data, _, error in
@@ -88,7 +88,7 @@ final class StocksNetworkingService {
                 return
             }
             guard let image = UIImage(data: data) else {
-                completion(.failure(error1.couldNotDownloadImage))
+                completion(.failure(NetworkingError.couldNotDownloadImage))
                 return
             }
             completion(.success((image, ticker)))
@@ -96,10 +96,10 @@ final class StocksNetworkingService {
         task.resume()
     }
     
-    private func fetchPriceInfo(of profile: StockProfilesModel, completion: @escaping (Result<(Double, Double, Double, String), Error>)->Void) {
+    private func fetchPriceInfo(of profile: StockProfilesModel, completion: @escaping (Result<(PriceReturnModel), Error>)->Void) {
         let ticker = profile.ticker
         guard let url = URL(string: "https://finnhub.io/api/v1/quote?token=csri4e1r01qhtrfn4ue0csri4e1r01qhtrfn4ueg&symbol=\(ticker)") else {
-            completion(.failure(error1.InvalidURL))
+            completion(.failure(NetworkingError.InvalidURL))
             return
         }
         let task = URLSession.shared.dataTask(with: url) {data, _, error in
@@ -109,9 +109,9 @@ final class StocksNetworkingService {
             }
             do {
                 let decodedData = try JSONDecoder().decode(StockPriceModel.self, from: data)
-                completion(.success((decodedData.c, decodedData.d, decodedData.dp, ticker)))
+                completion(.success(PriceReturnModel(c: decodedData.c, d: decodedData.d, dp: decodedData.dp, ticker: ticker)))
             } catch {
-                completion(.failure(error1.couldNotGetPriceInfo))
+                completion(.failure(NetworkingError.couldNotGetPriceInfo))
             }
         }
         task.resume()
