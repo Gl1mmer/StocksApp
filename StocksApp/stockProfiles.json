@@ -1,0 +1,97 @@
+[
+  {
+    "name": "Adobe Inc",
+    "logo": "https://finnhub.io/api/logo?symbol=ADBE",
+    "ticker": "ADBE"
+  },
+  {
+    "name": "Amazon.com Inc",
+    "logo": "https://finnhub.io/api/logo?symbol=AMZN",
+    "ticker": "AMZN"
+  },
+  {
+    "name": "Apple Inc",
+    "logo": "https://finnhub.io/api/logo?symbol=AAPL",
+    "ticker": "AAPL"
+  },
+  {
+    "name": "Boeing Co",
+    "logo": "https://finnhub.io/api/logo?symbol=BA",
+    "ticker": "BA"
+  },
+  {
+    "name": "Electronic Arts Inc",
+    "logo": "https://finnhub.io/api/logo?symbol=EA",
+    "ticker": "EA"
+  },
+  {
+    "name": "Ford Motor Co",
+    "logo": "https://finnhub.io/api/logo?symbol=F",
+    "ticker": "F"
+  },
+  {
+    "name": "Fox Corp",
+    "logo": "https://finnhub.io/api/logo?symbol=FOXA",
+    "ticker": "FOXA"
+  },
+  {
+    "name": "General Motors Co",
+    "logo": "https://finnhub.io/api/logo?symbol=GM",
+    "ticker": "GM"
+  },
+  {
+    "name": "HP Inc",
+    "logo": "https://finnhub.io/api/logo?symbol=HPQ",
+    "ticker": "HPQ"
+  },
+  {
+    "name": "Intel Corp",
+    "logo": "https://finnhub.io/api/logo?symbol=INTC",
+    "ticker": "INTC"
+  },
+  {
+    "name": "JPMorgan Chase & Co",
+    "logo": "https://finnhub.io/api/logo?symbol=JPM",
+    "ticker": "JPM"
+  },
+  {
+    "name": "Lincoln National Corp",
+    "logo": "https://finnhub.io/api/logo?symbol=LNC",
+    "ticker": "LNC"
+  },
+  {
+    "name": "Morgan Stanley",
+    "logo": "https://finnhub.io/api/logo?symbol=MS",
+    "ticker": "MS"
+  },
+  {
+    "name": "Microsoft Corp",
+    "logo": "https://finnhub.io/api/logo?symbol=MSFT",
+    "ticker": "MSFT"
+  },
+  {
+    "name": "Motorola Solutions Inc",
+    "logo": "https://finnhub.io/api/logo?symbol=MSI",
+    "ticker": "MSI"
+  },
+  {
+    "name": "Nike Inc",
+    "logo": "https://finnhub.io/api/logo?symbol=NKE",
+    "ticker": "NKE"
+  },
+  {
+    "name": "PayPal Holdings Inc",
+    "logo": "https://finnhub.io/api/logo?symbol=PYPL",
+    "ticker": "PYPL"
+  },
+  {
+    "name": "Qualcomm Inc",
+    "logo": "https://finnhub.io/api/logo?symbol=QCOM",
+    "ticker": "QCOM"
+  },
+  {
+    "name": "Walt Disney Co",
+    "logo": "https://finnhub.io/api/logo?symbol=DIS",
+    "ticker": "DIS"
+  },
+]
