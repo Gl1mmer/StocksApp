@@ -7,53 +7,149 @@
 import UIKit
 
 final class StocksViewModel {
-    
+
     private var listStocks: [StockModel] = []
-    
-    private let stocksNetworkingService = StocksNetworkingService()
+    private var listFavoriteStocks: [StockModel] = []
     
     var isFetchingEnded: (() -> Void)?
-    
-    private var showFavoriteStocks: Bool = false
+    var isFetchingPriceEnded: (() -> Void)?
 
-    func fetchStocks() {
-        stocksNetworkingService.fetchStocks { result in
+    private let LocalJsonReader: LocalJsonReaderProtocol
+    private let ImageDownloader: ImageDownloaderProtocol
+    private let PriceInfoFetcher: PriceInfoFetcherProtocol
+
+    init(
+        LocalJsonReader: LocalJsonReaderProtocol,
+        ImageDownloader: ImageDownloaderProtocol,
+        PriceInfoFetcher: PriceInfoFetcherProtocol
+    ) {
+        self.LocalJsonReader = LocalJsonReader
+        self.ImageDownloader = ImageDownloader
+        self.PriceInfoFetcher = PriceInfoFetcher
+    }
+
+    func fetchStockData() {
+        LocalJsonReader.fetchStocks { [weak self] result in
             switch result {
-                case .success(let stocks):
-                    self.listStocks = stocks
-                    DispatchQueue.main.async {
-                        self.isFetchingEnded?()
-                    }
-                case .failure:
-                    print("Error during fetching images")
-                    break
+            case .success(let profiles):
+                self?.processProfiles(profiles)
+            case .failure(let error):
+                print(error)
             }
         }
     }
-    
-    func getFavoriteStocks() -> [StockModel] {
-        let favoriteStocks = listStocks.filter(\.favorite)
-        return favoriteStocks
+
+    private func processProfiles(_ profiles: [StockProfilesModel]) {
+        let group = DispatchGroup()
+        let lock = NSLock()
+
+        for profile in profiles {
+            let initialModel = createInitialStockModels(profile: profile)
+            listStocks.append(initialModel)
+            group.enter()
+            ImageDownloader.downloadImage(from: profile) { [weak self] result in
+                switch result {
+                case .success((let image, let ticker)):
+                    lock.lock()
+                    self?.addImageToStockModel(image: image, ticker: ticker)
+                    lock.unlock()
+                case .failure(_):
+                    print("cannot download Image")
+                }
+                group.leave()
+            }
+        }
+        group.notify(queue: .main) {
+            self.isFetchingEnded?()
+        }
     }
     
+    func fetchStockPrice() {
+        let group = DispatchGroup()
+        let lock = NSLock()
+        
+        for stock in listStocks {
+            group.enter()
+            PriceInfoFetcher.fetchPriceInfo(of: stock.ticker) { [weak self] result in
+                switch result {
+                    case .success(let output):
+                        lock.lock()
+                        self?.addPriceInfoToStockModel(price: output.c, change: output.d, changePercent: output.dp, ticker: output.ticker)
+                        lock.unlock()
+                    case .failure(let error):
+                        print("!!! \(error)")
+                }
+                group.leave()
+            }
+        }
+        group.notify(queue: .main) {
+            self.isFetchingPriceEnded?()
+        }
+    }
+    
+    var showFavoriteStocks: Bool = false
+
+    func updateFavoriteStocksList() {
+        listFavoriteStocks = listStocks.filter(\.favorite)
+    }
+
     func getAllStocks() -> [StockModel] {
-        if (!showFavoriteStocks) {return listStocks}
-        else {return getFavoriteStocks()}
+        if !showFavoriteStocks {
+            return listStocks
+        } else {
+            return listFavoriteStocks
+        }
     }
-    
+
     func getStock(index: Int) -> StockModel {
-        listStocks[index]
+        if !showFavoriteStocks {
+            return listStocks[index]
+        } else {
+            return listFavoriteStocks[index]
+        }
     }
-    
-    
+
     func favoriteButtonTapped(_ ticker: String) {
-        guard let index = listStocks.firstIndex(where: { $0.ticker == ticker }) else {
+        guard let index = listStocks.firstIndex(where: { $0.ticker == ticker })
+        else {
             return
         }
-        listStocks[index].favorite = (listStocks[index].favorite == true) ? false : true
+        listStocks[index].favorite =
+            (listStocks[index].favorite == true) ? false : true
+        updateFavoriteStocksList()
     }
-    
+
     func showFavoriteStocks(_ show: Bool) {
-        self.showFavoriteStocks = show
+        showFavoriteStocks = show
+    }
+}
+
+extension StocksViewModel {
+    private func createInitialStockModels(profile: StockProfilesModel) -> StockModel {
+        let model = StockModel(
+            ticker: profile.ticker, name: profile.name,
+            logo: UIImage(systemName: "questionmark"), price: nil, change: nil,
+            changePercent: nil)
+        return model
+    }
+
+    private func addImageToStockModel(image: UIImage, ticker: String) {
+        guard let index = listStocks.firstIndex(where: { $0.ticker == ticker })
+        else {
+            return
+        }
+        listStocks[index].logo = image
+    }
+
+    private func addPriceInfoToStockModel(
+        price: Double, change: Double, changePercent: Double, ticker: String
+    ) {
+        guard let index = listStocks.firstIndex(where: { $0.ticker == ticker })
+        else {
+            return
+        }
+        listStocks[index].price = price
+        listStocks[index].change = change
+        listStocks[index].changePercent = changePercent
     }
 }

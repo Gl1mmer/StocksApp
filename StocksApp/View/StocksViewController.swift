@@ -8,7 +8,7 @@ import UIKit
 
 final class StocksViewController: UIViewController {
     
-    private let model = StocksViewModel()
+    private let model = StocksViewModel(LocalJsonReader: LocalJsonReader(), ImageDownloader: ImageDownloader(), PriceInfoFetcher: PriceInfoFetcher())
 
     private let searchTextField = CustomSearchBar()
         
@@ -50,9 +50,12 @@ final class StocksViewController: UIViewController {
         view.backgroundColor = .white
         setupUI()
         tableViewDelegateConfiguration()
-        model.fetchStocks()
-                
+        model.fetchStockData() // completionHandler
         model.isFetchingEnded = {
+            self.companiesTableView.reloadData()
+            self.model.fetchStockPrice()
+        }
+        model.isFetchingPriceEnded = {
             self.companiesTableView.reloadData()
         }
     }
@@ -121,8 +124,8 @@ extension StocksViewController: UITableViewDelegate, UITableViewDataSource {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: StockCell.identifier, for: indexPath) as? StockCell else {
             fatalError("Could not dequeue cell [1]")
         }
-//        cell.configure(info: model.getStock(index: indexPath.row), index: indexPath.row)
-        cell.configure(info: model.getAllStocks()[indexPath.row], index: indexPath.row)
+//        cell.configure(info: model.getAllStocks()[indexPath.row], index: indexPath.row)
+        cell.configure(info: model.getStock(index: indexPath.row), index: indexPath.row) // issues with favorite button
         cell.delegate = self
         return cell
     }

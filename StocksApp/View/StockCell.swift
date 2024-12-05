@@ -16,7 +16,7 @@ class StockCell: UITableViewCell {
     
     weak var delegate: StockCellDelegate?
     
-    private var companySymbolImageView: UIImageView = {
+    private let companySymbolImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage(systemName: "questionmark")
         imageView.contentMode = .scaleAspectFit
@@ -56,7 +56,7 @@ class StockCell: UITableViewCell {
     
     private let currentPriceLabel: UILabel = {
         let label = UILabel()
-        label.text = "???"
+        label.text = "Loading"
         label.font = .systemFont(ofSize: 18, weight: .bold)
         label.textColor = .black
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -65,7 +65,7 @@ class StockCell: UITableViewCell {
     
     private let dayDeltaLabel: UILabel = {
         let label = UILabel()
-        label.text = "???"
+        label.text = "Loading"
         label.font = .systemFont(ofSize: 12, weight: .regular)
         label.textColor = .green
         label.translatesAutoresizingMaskIntoConstraints = false
