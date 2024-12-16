@@ -12,7 +12,8 @@ protocol PriceInfoFetcherProtocol {
 }
 
 final class PriceInfoFetcher: PriceInfoFetcherProtocol {
-      func fetchPriceInfo(of ticker: String, completion: @escaping (Result<(PriceReturnModel), Error>)->Void) {
+      func fetchPriceInfo(of ticker: String,
+                          completion: @escaping (Result<(PriceReturnModel), Error>)->Void) {
         let ticker = ticker
         guard let url = URL(string: "https://finnhub.io/api/v1/quote?token=csri4e1r01qhtrfn4ue0csri4e1r01qhtrfn4ueg&symbol=\(ticker)") else {
             completion(.failure(NetworkingError.InvalidURL))

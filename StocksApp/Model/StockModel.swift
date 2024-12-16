@@ -9,7 +9,7 @@ import UIKit
 struct StockModel {
     let ticker: String
     let name: String
-    var logo: UIImage?
+    let logoString: String
     var price: Double?
     var change: Double?
     var changePercent: Double?

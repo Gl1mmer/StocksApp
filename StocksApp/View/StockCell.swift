@@ -15,17 +15,8 @@ class StockCell: UITableViewCell {
     static let identifier = String(describing: StockCell.self)
     
     weak var delegate: StockCellDelegate?
-    
-    private let companySymbolImageView: UIImageView = {
-        let imageView = UIImageView()
-        imageView.image = UIImage(systemName: "questionmark")
-        imageView.contentMode = .scaleAspectFit
-        imageView.layer.cornerRadius = 12
-        imageView.backgroundColor = .systemGray5
-        imageView.clipsToBounds = true
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        return imageView
-    }()
+
+    let companySymbolImageView = CustomImageView(frame: .zero)
     
     private let companyNameLabel: UILabel = {
         let label = UILabel()
@@ -39,7 +30,7 @@ class StockCell: UITableViewCell {
     private lazy var favoriteButton: UIButton = {
         let button = UIButton()
         button.setImage(UIImage(systemName: "star.fill"), for: .normal)
-        button.tintColor = .systemGray4
+        button.tintColor = .systemGray3
         button.addTarget(self, action: #selector(favoriteButtonTapped), for: .touchUpInside)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
@@ -85,7 +76,6 @@ class StockCell: UITableViewCell {
     
     func configure(info: StockModel, index: Int) {
         backgroundColor = (index % 2 == 0) ? .systemGray6 : .white
-        companySymbolImageView.image = info.logo
         companyNameLabel.text = info.ticker
         companyAddInfoLabel.text = info.name
         guard let currentPrice = info.price, let dayDelta = info.change, let changePercentage = info.changePercent else { return }
