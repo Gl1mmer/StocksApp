@@ -11,6 +11,8 @@ final class StocksViewController: UIViewController {
     private let model = StocksViewModel(localJsonReader: LocalJsonReader(), priceInfoFetcher: PriceInfoFetcher())
 
     private let searchTextField = CustomSearchBar()
+    
+    private lazy var searchEmptyView = SearchEmptyView(model: model)
         
     private let companiesTableView: UITableView = {
         let tv = UITableView()
@@ -45,38 +47,12 @@ final class StocksViewController: UIViewController {
         return button
     }()
 
-    private let popularStocksCollectionView: UICollectionView = {
-        let layout = UICollectionViewFlowLayout()
-        layout.scrollDirection = .horizontal
-        layout.minimumLineSpacing = 4
-        layout.minimumInteritemSpacing = 8
-        let cv = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        cv.backgroundColor = .clear
-        cv.translatesAutoresizingMaskIntoConstraints = false
-        cv.register(CustomCollectionViewCell.self, forCellWithReuseIdentifier: CustomCollectionViewCell.identifier)
-        cv.showsHorizontalScrollIndicator = false
-        return cv
-    }()
-
-    private let recentStocksCollectionView: UICollectionView = {
-        let layout = UICollectionViewFlowLayout()
-        layout.scrollDirection = .horizontal
-        layout.minimumLineSpacing = 4
-        layout.minimumInteritemSpacing = 8
-        let cv = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        cv.backgroundColor = .clear
-        cv.translatesAutoresizingMaskIntoConstraints = false
-        cv.register(CustomCollectionViewCell.self, forCellWithReuseIdentifier: CustomCollectionViewCell.identifier)
-        cv.showsHorizontalScrollIndicator = false
-        return cv
-    }()
-
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        setupCollectionViews()
         tableViewDelegateConfiguration()
         model.fetchStockData()
+        addSearchEmptyView()
         model.isFetchingEnded = {
             self.companiesTableView.reloadData()
         }
@@ -118,28 +94,14 @@ final class StocksViewController: UIViewController {
         ])
     }
     
-    private func setupCollectionViews() {
-        view.addSubview(popularStocksCollectionView)
-        view.addSubview(recentStocksCollectionView)
-
-        popularStocksCollectionView.isHidden = true
-        popularStocksCollectionView.delegate = self
-        popularStocksCollectionView.dataSource = self
-        
-        recentStocksCollectionView.delegate = self
-        recentStocksCollectionView.dataSource = self
-        recentStocksCollectionView.isHidden = true
-                
-        NSLayoutConstraint.activate([
-            popularStocksCollectionView.topAnchor.constraint(equalTo: searchTextField.bottomAnchor, constant: 67),
-            popularStocksCollectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            popularStocksCollectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            popularStocksCollectionView.heightAnchor.constraint(equalToConstant: 88),
+        private func addSearchEmptyView() {
+            view.addSubview(searchEmptyView)
             
-            recentStocksCollectionView.topAnchor.constraint(equalTo: searchTextField.bottomAnchor, constant: 218),
-            recentStocksCollectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            recentStocksCollectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            recentStocksCollectionView.heightAnchor.constraint(equalToConstant: 88),
+            NSLayoutConstraint.activate([
+                searchEmptyView.topAnchor.constraint(equalTo: searchTextField.bottomAnchor, constant: 32),
+                searchEmptyView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+                searchEmptyView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+                searchEmptyView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
             ])
     }
 
@@ -193,15 +155,14 @@ extension StocksViewController: UITableViewDelegate, UITableViewDataSource {
 extension StocksViewController: StockCellDelegate {
     func favoriteButtonTapped(of ticker: String) {
         model.favoriteButtonTapped(ticker)
-        companiesTableView.reloadData() // is there any way to reload only this cell
+        companiesTableView.reloadData()
     }
 }
 
 extension StocksViewController: CustomSearchBarDelegate {
     func showSearchResults(for text: String) {
         model.filterStocks(str: text)
-        popularStocksCollectionView.isHidden = true
-        recentStocksCollectionView.isHidden = true
+        searchEmptyView.isHidden = true
         companiesTableView.isHidden = false
         companiesTableView.reloadData()
     }
@@ -209,8 +170,7 @@ extension StocksViewController: CustomSearchBarDelegate {
     func didLeftButtonTapped() {
         buttonsView.isHidden = false
         companiesTableView.isHidden = false
-        popularStocksCollectionView.isHidden = true
-        recentStocksCollectionView.isHidden = true
+        searchEmptyView.isHidden = true
         model.isUserSearching = false
         companiesTableView.reloadData()
     }
@@ -218,28 +178,7 @@ extension StocksViewController: CustomSearchBarDelegate {
     func didBeginEditing() {
         buttonsView.isHidden = true
         companiesTableView.isHidden = true
-        popularStocksCollectionView.isHidden = false
-        recentStocksCollectionView.isHidden = false
+        searchEmptyView.isHidden = false
         model.isUserSearching = true
-    }
-}
-
-extension StocksViewController: UICollectionViewDelegate, UICollectionViewDataSource {
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        model.getAllStocks().count
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CustomCollectionViewCell.identifier, for: indexPath) as? CustomCollectionViewCell else { fatalError("Error dequeueing cell") }
-        cell.configure(model.getStock(index: indexPath.row).name)
-        return cell
-    }
-    
-}
-
-extension StocksViewController: UICollectionViewDelegateFlowLayout {
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return CGSize(width: 80, height: 40)
     }
 }
