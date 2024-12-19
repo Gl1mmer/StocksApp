@@ -78,12 +78,11 @@ class StockCell: UITableViewCell {
         backgroundColor = (index % 2 == 0) ? .systemGray6 : .white
         companyNameLabel.text = info.ticker
         companyAddInfoLabel.text = info.name
+        favoriteButton.tintColor = (info.favorite == false) ? .systemGray4 : .systemOrange
         guard let currentPrice = info.price, let dayDelta = info.change, let changePercentage = info.changePercent else { return }
         currentPriceLabel.text = String(format: "$%.2f", currentPrice)
         dayDeltaLabel.textColor = (dayDelta > 0) ? .systemGreen : .systemRed
         dayDeltaLabel.text = (dayDelta > 0) ? String(format: "+$%.2f (%.2f%%)", abs(dayDelta), abs(changePercentage)) : String(format: "-$%.2f (%.2f%%)", abs(dayDelta), abs(changePercentage))
-        favoriteButton.tintColor = (info.favorite == false) ? .systemGray4 : .systemOrange
-
     }
     
     @objc private func favoriteButtonTapped() {

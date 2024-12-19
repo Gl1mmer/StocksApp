@@ -26,7 +26,6 @@ final class CustomSearchBar: UIView {
                 .font: UIFont.systemFont(ofSize: 14, weight: .regular)])
         tf.translatesAutoresizingMaskIntoConstraints = false
         tf.addTarget(self, action: #selector(textFieldDidChange(_:)), for: .editingChanged)
-//        tf.clearButtonMode = .whileEditing // seems better than adding right button
         return tf
     }()
     
@@ -115,9 +114,6 @@ final class CustomSearchBar: UIView {
         } else {
             rightButton.isHidden = false
             delegate?.showSearchResults(for: textField.text!)
-//            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-//                self.delegate?.showSearchResults(for: textField.text!)
-//            }
         }
     }
 }
@@ -131,4 +127,5 @@ extension CustomSearchBar: UITextFieldDelegate{
 
 extension UIColor {
     public static var myColor = UIColor(red: 26/255, green: 26/255, blue: 26/255, alpha: 1)
+    
 }
