@@ -5,27 +5,27 @@
 //  Created by Amankeldi Zhetkergen on 15.11.2024.
 //
 import UIKit
-import CoreData
 
 final class StocksViewModel {
 
     private var listStocks: [StockModel] = []
     private var listFavoriteStocks: [StockModel] = []
     private var listFiltered: [StockModel] = []
-    
-    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
 
     var isFetchingEnded: (() -> Void)?
 
     private let localJsonReader: LocalJsonReaderProtocol
     private let priceInfoFetcher: PriceInfoFetcherProtocol
+    private let coreDataControl: CoreDataControl
 
     init(
         localJsonReader: LocalJsonReaderProtocol,
-        priceInfoFetcher: PriceInfoFetcherProtocol
+        priceInfoFetcher: PriceInfoFetcherProtocol,
+        coreDataControl: CoreDataControl
     ) {
         self.localJsonReader = localJsonReader
         self.priceInfoFetcher = priceInfoFetcher
+        self.coreDataControl = coreDataControl
     }
 
     func fetchStockData() {
@@ -70,7 +70,7 @@ final class StocksViewModel {
     }
     
     func didAppLaunched() {
-        let tickers = fetchFavoriteTickers()
+        let tickers = coreDataControl.fetchFavoriteTickers()
         if !tickers.isEmpty {
             for ticker in tickers {
                 guard let index = listStocks.firstIndex(where: { $0.ticker == ticker })
@@ -130,13 +130,21 @@ final class StocksViewModel {
         }
         if (listStocks[index].favorite == false) {
             listStocks[index].favorite = true
-            saveFavoriteTicker(ticker: ticker)
+            coreDataControl.saveFavoriteTicker(ticker: ticker)
         } else {
             listStocks[index].favorite = false
-            removeFavoriteTicker(ticker: ticker)
+            coreDataControl.removeFavoriteTicker(ticker: ticker)
         }
-//        listStocks[index].favorite =
-//            (listStocks[index].favorite == true) ? false : true
+        updateFavoriteStocksList()
+    }
+    
+    func updateStockFavorite(ticker: String, favorite: Bool) {
+        guard let index = listStocks.firstIndex(where: { $0.ticker == ticker })
+        else {
+            print("error updating favorite")
+            return
+        }
+        listStocks[index].favorite = favorite
         updateFavoriteStocksList()
     }
 
@@ -171,48 +179,3 @@ extension StocksViewModel {
     }
 }
 
-//MARK: - CoreData Functions
-
-extension StocksViewModel {
-    
-    func fetchFavoriteTickers() -> [String] {
-        do {
-            let favorites = try context.fetch(FavoriteTickers.fetchRequest())
-            return favorites.map(\.ticker!)
-        } catch {
-            print("can't fetch favorite tickers")
-        }
-        print("fetched favorite tickers")
-        return []
-    }
-    
-    func saveFavoriteTicker(ticker: String) {
-        let newFavStock = FavoriteTickers(context: context)
-        newFavStock.ticker = ticker
-        
-        do {
-            try context.save()
-        } catch {
-            print("can't save favorite ticker")
-        }
-        print("saved favorite ticker: \(ticker)")
-    }
-    
-    func removeFavoriteTicker(ticker: String) { // from ChatGPT
-        let fetchRequest: NSFetchRequest<FavoriteTickers> = FavoriteTickers.fetchRequest()
-            fetchRequest.predicate = NSPredicate(format: "ticker == %@", ticker)
-
-            do {
-                let results = try context.fetch(fetchRequest)
-                if let favoriteToRemove = results.first {
-                    context.delete(favoriteToRemove)
-                    try context.save()
-                    print("Removed favorite ticker: \(ticker)")
-                } else {
-                    print("Ticker not found: \(ticker)")
-                }
-            } catch {
-                print("Failed to remove favorite ticker: \(error)")
-            }
-    }
-}

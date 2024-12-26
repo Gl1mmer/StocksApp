@@ -26,7 +26,6 @@ final class SearchEmptyView: UIView {
         layout.minimumLineSpacing = 4
         layout.minimumInteritemSpacing = 8
         let cv = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        cv.backgroundColor = .blue
         cv.translatesAutoresizingMaskIntoConstraints = false
         cv.register(CustomCollectionViewCell.self, forCellWithReuseIdentifier: CustomCollectionViewCell.identifier)
         cv.showsHorizontalScrollIndicator = false
@@ -48,7 +47,6 @@ final class SearchEmptyView: UIView {
         layout.minimumLineSpacing = 4
         layout.minimumInteritemSpacing = 8
         let cv = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        cv.backgroundColor = .blue
         cv.translatesAutoresizingMaskIntoConstraints = false
         cv.register(CustomCollectionViewCell.self, forCellWithReuseIdentifier: CustomCollectionViewCell.identifier)
         cv.showsHorizontalScrollIndicator = false

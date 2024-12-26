@@ -5,10 +5,13 @@
 //  Created by Amankeldi Zhetkergen on 09.11.2024.
 //
 import UIKit
+import SwiftUI
 
 final class StocksViewController: UIViewController {
     
-    private let model = StocksViewModel(localJsonReader: LocalJsonReader(), priceInfoFetcher: PriceInfoFetcher())
+    private let coreDataControl = CoreDataControl()
+    
+    private lazy var model = StocksViewModel(localJsonReader: LocalJsonReader(), priceInfoFetcher: PriceInfoFetcher(), coreDataControl: coreDataControl)
 
     private let searchTextField = CustomSearchBar()
     
@@ -66,7 +69,7 @@ final class StocksViewController: UIViewController {
         view.addSubview(buttonsView)
         buttonsView.addSubview(stocksButton)
         buttonsView.addSubview(favouriteButton)
-        
+                
         searchTextField.delegate = self
         view.bringSubviewToFront(searchTextField)
                 
@@ -86,7 +89,7 @@ final class StocksViewController: UIViewController {
             
             favouriteButton.leadingAnchor.constraint(equalTo: stocksButton.trailingAnchor, constant: 20),
             favouriteButton.bottomAnchor.constraint(equalTo: buttonsView.bottomAnchor, constant: 0),
-
+            
             companiesTableView.topAnchor.constraint(equalTo: buttonsView.bottomAnchor, constant: 20),
             companiesTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             companiesTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor,constant: -16),
@@ -94,15 +97,15 @@ final class StocksViewController: UIViewController {
         ])
     }
     
-        private func addSearchEmptyView() {
-            view.addSubview(searchEmptyView)
+    private func addSearchEmptyView() {
+        view.addSubview(searchEmptyView)
             
-            NSLayoutConstraint.activate([
-                searchEmptyView.topAnchor.constraint(equalTo: searchTextField.bottomAnchor, constant: 32),
-                searchEmptyView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-                searchEmptyView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-                searchEmptyView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-            ])
+        NSLayoutConstraint.activate([
+            searchEmptyView.topAnchor.constraint(equalTo: searchTextField.bottomAnchor, constant: 32),
+            searchEmptyView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            searchEmptyView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            searchEmptyView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
     }
 
     private func tableViewDelegateConfiguration() {
@@ -127,6 +130,16 @@ final class StocksViewController: UIViewController {
         model.showFavoriteStocks(true)
         companiesTableView.reloadData()
     }
+    
+    private func openNextPage(_ stock: StockModel) {
+        let nextView = SwiftUIView(stock: stock, coreData: coreDataControl) { favorite in
+            self.model.updateStockFavorite(ticker: stock.ticker, favorite: favorite)
+            self.companiesTableView.reloadData()
+        }
+        let hostingController = UIHostingController(rootView: nextView)
+        hostingController.modalPresentationStyle = .fullScreen
+        present(hostingController, animated: true, completion: nil)
+    }
 }
 
 extension StocksViewController: UITableViewDelegate, UITableViewDataSource {
@@ -146,6 +159,12 @@ extension StocksViewController: UITableViewDelegate, UITableViewDataSource {
         return cell
     }
     
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let stock = model.getStock(index: indexPath.row)
+        openNextPage(stock)
+        tableView.deselectRow(at: indexPath, animated: true)
+        
+    }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         68
