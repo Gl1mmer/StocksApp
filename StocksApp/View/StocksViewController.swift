@@ -4,6 +4,7 @@
 //
 //  Created by Amankeldi Zhetkergen on 09.11.2024.
 //
+
 import UIKit
 import SwiftUI
 
@@ -15,7 +16,7 @@ final class StocksViewController: UIViewController {
 
     private let searchTextField = CustomSearchBar()
     
-    private lazy var searchEmptyView = SearchEmptyView(model: model)
+    private lazy var searchEmptyView = SearchEmptyView(delegate: self)
         
     private let companiesTableView: UITableView = {
         let tv = UITableView()
@@ -46,6 +47,31 @@ final class StocksViewController: UIViewController {
         button.setTitleColor(.systemGray4, for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 18, weight: .bold)
         button.addTarget(self, action: #selector(favouritesButtonTapped), for: .touchUpInside)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    private let labelButtonView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.isHidden = true
+        return view
+    }()
+        
+    private let stocksLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Stocks"
+        label.textColor = .label
+        label.font = .systemFont(ofSize: 18, weight: .bold)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private lazy var showMoreButton: UIButton = {
+        let button  = UIButton()
+        button.setTitle("Show more", for: .normal)
+        button.setTitleColor(.label, for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 12, weight: .semibold)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -90,7 +116,7 @@ final class StocksViewController: UIViewController {
             favouriteButton.leadingAnchor.constraint(equalTo: stocksButton.trailingAnchor, constant: 20),
             favouriteButton.bottomAnchor.constraint(equalTo: buttonsView.bottomAnchor, constant: 0),
             
-            companiesTableView.topAnchor.constraint(equalTo: buttonsView.bottomAnchor, constant: 20),
+            companiesTableView.topAnchor.constraint(equalTo: buttonsView.bottomAnchor, constant: 8), // 20
             companiesTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             companiesTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor,constant: -16),
             companiesTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
@@ -99,8 +125,23 @@ final class StocksViewController: UIViewController {
     
     private func addSearchEmptyView() {
         view.addSubview(searchEmptyView)
-            
+        
+        view.addSubview(labelButtonView)
+        labelButtonView.addSubview(stocksLabel)
+        labelButtonView.addSubview(showMoreButton)
+                    
         NSLayoutConstraint.activate([
+            labelButtonView.topAnchor.constraint(equalTo: searchTextField.bottomAnchor, constant: 20),
+            labelButtonView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            labelButtonView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            labelButtonView.heightAnchor.constraint(equalToConstant: 32),
+            
+            stocksLabel.leadingAnchor.constraint(equalTo: labelButtonView.leadingAnchor),
+            stocksLabel.centerYAnchor.constraint(equalTo: labelButtonView.centerYAnchor),
+            
+            showMoreButton.trailingAnchor.constraint(equalTo: labelButtonView.trailingAnchor),
+            showMoreButton.centerYAnchor.constraint(equalTo: labelButtonView.centerYAnchor),
+
             searchEmptyView.topAnchor.constraint(equalTo: searchTextField.bottomAnchor, constant: 32),
             searchEmptyView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             searchEmptyView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
@@ -132,7 +173,7 @@ final class StocksViewController: UIViewController {
     }
     
     private func openNextPage(_ stock: StockModel) {
-        let nextView = SwiftUIView(stock: stock, coreData: coreDataControl) { favorite in
+        let nextView = StockDetailView(stock: stock, coreData: coreDataControl) { favorite in
             self.model.updateStockFavorite(ticker: stock.ticker, favorite: favorite)
             self.companiesTableView.reloadData()
         }
@@ -144,23 +185,23 @@ final class StocksViewController: UIViewController {
 
 extension StocksViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return model.getAllStocks().count
+        return model.getStocks(for: .tableView).count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: StockCell.identifier, for: indexPath) as? StockCell else {
             fatalError("Could not dequeue cell [1]")
         }
-        if let url = URL(string: model.getStock(index: indexPath.row).logoString) {
+        if let url = URL(string: model.getStock(at: indexPath.row, for: .tableView).logoString) {
             cell.companySymbolImageView.loadImageFromURL(url: url)
         }
-        cell.configure(info: model.getStock(index: indexPath.row), index: indexPath.row)
+        cell.configure(info: model.getStock(at: indexPath.row, for: .tableView), index: indexPath.row)
         cell.delegate = self
         return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let stock = model.getStock(index: indexPath.row)
+        let stock = model.getStock(at: indexPath.row, for: .tableView)
         openNextPage(stock)
         tableView.deselectRow(at: indexPath, animated: true)
         
@@ -171,33 +212,60 @@ extension StocksViewController: UITableViewDelegate, UITableViewDataSource {
     }
 }
 
+extension StocksViewController: UICollectionViewDelegate, UICollectionViewDataSource {
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return model.getStocks(for: .collectionView).count
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CustomCollectionViewCell.identifier, for: indexPath) as? CustomCollectionViewCell else { fatalError("Error dequeueing cell") }
+        cell.configure(model.getStock(at: indexPath.row, for: .collectionView).name)
+        return cell
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let stock = model.getStock(at: indexPath.row, for: .collectionView)
+        openNextPage(stock)
+        collectionView.deselectItem(at: indexPath, animated: true)
+    }
+}
+
+extension StocksViewController: UICollectionViewDelegateFlowLayout {
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        return CGSize(width: 80, height: 40)
+    }
+}
+
 extension StocksViewController: StockCellDelegate {
-    func favoriteButtonTapped(of ticker: String) {
-        model.favoriteButtonTapped(ticker)
+    func favoriteButtonTapped(of ticker: String, favoriteState: Bool) {
+        model.updateStockFavorite(ticker: ticker, favorite: favoriteState)
         companiesTableView.reloadData()
     }
 }
 
 extension StocksViewController: CustomSearchBarDelegate {
     func showSearchResults(for text: String) {
-        model.filterStocks(str: text)
+        model.isUserSearching = true
+        model.filterStocks(by: text)
         searchEmptyView.isHidden = true
+        labelButtonView.isHidden = false
         companiesTableView.isHidden = false
         companiesTableView.reloadData()
     }
     
     func didLeftButtonTapped() {
-        buttonsView.isHidden = false
-        companiesTableView.isHidden = false
         searchEmptyView.isHidden = true
+        labelButtonView.isHidden = true
+        companiesTableView.isHidden = false
+        buttonsView.isHidden = false
         model.isUserSearching = false
         companiesTableView.reloadData()
     }
     
     func didBeginEditing() {
-        buttonsView.isHidden = true
-        companiesTableView.isHidden = true
         searchEmptyView.isHidden = false
-        model.isUserSearching = true
+        labelButtonView.isHidden = true
+        companiesTableView.isHidden = true
+        buttonsView.isHidden = true
     }
 }

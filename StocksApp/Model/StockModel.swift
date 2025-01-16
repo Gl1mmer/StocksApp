@@ -4,6 +4,7 @@
 //
 //  Created by Amankeldi Zhetkergen on 15.11.2024.
 //
+
 import UIKit
 
 struct StockModel {
@@ -16,6 +17,13 @@ struct StockModel {
     var favorite: Bool = false
 }
 
+struct PriceReturnModel {
+    let c: Double
+    let d: Double
+    let dp: Double
+    let ticker: String
+}
+
 struct StockProfilesModel: Codable {
     let name: String
     let logo: String
@@ -26,11 +34,4 @@ struct StockPriceModel: Codable {
     let c: Double
     let d: Double
     let dp: Double
-}
-
-struct PriceReturnModel {
-    let c: Double
-    let d: Double
-    let dp: Double
-    let ticker: String
 }

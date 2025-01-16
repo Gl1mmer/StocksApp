@@ -10,7 +10,6 @@ import UIKit
 let imageCache = NSCache<AnyObject, AnyObject>()
 
 class CustomImageView: UIImageView {
-    
     var task : URLSessionDataTask!
     
     override init(frame: CGRect) {
@@ -27,7 +26,6 @@ class CustomImageView: UIImageView {
     }
     
     func loadImageFromURL(url: URL) {
-        
         image = nil
         
         if let task = task {
@@ -44,13 +42,10 @@ class CustomImageView: UIImageView {
                 print("Could not download an image")
                 return
             }
-        
             imageCache.setObject(logoImage, forKey: url.absoluteString as AnyObject)
-            
             DispatchQueue.main.async {
                 self.image = logoImage
             }
-            
         }
         task.resume()
     }

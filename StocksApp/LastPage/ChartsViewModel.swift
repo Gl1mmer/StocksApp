@@ -4,77 +4,121 @@
 //
 //  Created by Amankeldi Zhetkergen on 25.12.2024.
 //
-
 import Foundation
 
 final class ChartsViewModel: ObservableObject {
     
-    @Published var ticker: String
-    @Published var name: String
-    @Published var price: Double
-    @Published var change: Double
-    @Published var changePercent: Double
-    @Published var isFavorite: Bool
-
+    @Published var dataModel : StockModelChartsPage
+    @Published var isShowAlert: Bool = false
+    @Published var isBoughtStock: Bool = false
+    var prices: [PriceDay] = []
+    @Published var pricesPerPeriod: [PriceDay] = []
     var coreDataManager: CoreDataControl
+    var priceHistoryDownloader: PriceHistoryNetworkingProtocol
     
-    init(stock: StockModel, coreData: CoreDataControl) {
-        ticker = stock.ticker
-        name = stock.name
-        price = stock.price ?? 0
-        change = stock.change ?? 0
-        changePercent = stock.changePercent ?? 0
-        isFavorite = stock.favorite
+    let dataConverter = dataConverterClass()
+    
+    init(stock: StockModel, coreData: CoreDataControl, priceHistoryNetworking: PriceHistoryNetworkingProtocol) {
+        self.dataModel = StockModelChartsPage(
+                    ticker: stock.ticker,
+                    name: stock.name,
+                    price: stock.price ?? 0,
+                    change: stock.change ?? 0,
+                    changePercent: stock.changePercent ?? 0,
+                    isFavorite: stock.favorite
+                )
         self.coreDataManager = coreData
+        self.priceHistoryDownloader = priceHistoryNetworking
     }
     
     func favoriteButtonTapped() {
-        if isFavorite {
-            coreDataManager.removeFavoriteTicker(ticker: ticker)
+        if dataModel.isFavorite {
+            coreDataManager.removeFavoriteTicker(ticker: dataModel.ticker)
         } else {
-            coreDataManager.saveFavoriteTicker(ticker: ticker)
+            coreDataManager.saveFavoriteTicker(ticker: dataModel.ticker)
         }
-        isFavorite.toggle()
+        dataModel.isFavorite.toggle()
     }
     
-    @Published var prices: [PriceDay] = [
-        PriceDay(date: 1, price: 254.77),
-        PriceDay(date: 2, price: 218.04),
-        PriceDay(date: 3, price: 227.50),
-        PriceDay(date: 4, price: 232.16),
-        PriceDay(date: 5, price: 200.08),
-        PriceDay(date: 6, price: 237.99),
-        PriceDay(date: 7, price: 227.82),
-        PriceDay(date: 8, price: 216.89),
-        PriceDay(date: 9, price: 247.96),
-        PriceDay(date: 10, price: 216.89),
-        PriceDay(date: 11, price: 251.83),
-        PriceDay(date: 12, price: 282.91),
-        PriceDay(date: 13, price: 203.99),
-        PriceDay(date: 14, price: 222.87),
-        PriceDay(date: 15, price: 249.81),
-        PriceDay(date: 16, price: 257.27),
-        PriceDay(date: 17, price: 264.81),
-        PriceDay(date: 18, price: 254.47),
-        PriceDay(date: 19, price: 223.33),
-        PriceDay(date: 20, price: 211.46),
-        PriceDay(date: 21, price: 198.06),
-        PriceDay(date: 22, price: 208.88),
-        PriceDay(date: 23, price: 208.06),
-        PriceDay(date: 24, price: 206.98),
-        PriceDay(date: 25, price: 215.25),
-        PriceDay(date: 26, price: 216.40),
-        PriceDay(date: 27, price: 225.02),
-        PriceDay(date: 28, price: 214.01),
-        PriceDay(date: 29, price: 204.55),
-        PriceDay(date: 30, price: 225.00)
-    ]
+    func fetchHistoryPrice() {
+        priceHistoryDownloader.fetchPriceHistory(of: dataModel.ticker) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let historialPrices):
+                    self?.prices = historialPrices.timeSeriesDaily.map { date, dailyData in
+                        PriceDay(
+                            id: self?.dataConverter.getIndex() ?? 0,
+                            date: self?.dataConverter.convertStringToDate(date) ?? Date(),
+                            price: Double(dailyData.the1Open) ?? 0.0
+                        )
+                    }
+                    self?.pricesPerPeriod = self!.prices
+                case .failure(let error):
+                    print("\(error) !!!")
+                }
+            }
+        }
+    }
+    
+    func getPriceForPeriod(of period: String) {
+        var count = 0;
+        if period == "D" {
+            count = 1
+        } else if period == "3D" {
+            count = 3
+        } else if period == "W" {
+            count = 7
+        } else if period == "2W" {
+            count = 14
+        } else if period == "M" {
+            count = 30
+        } else if period == "All" {
+            count = prices.count
+        }
+        let reducedPrices = Array(prices.suffix(count))
+        pricesPerPeriod = reducedPrices.enumerated().map { index, priceDay in
+            PriceDay(id: index, date: priceDay.date, price: priceDay.price)
+        }
+    }
+    
+    func getPriceForIndex(of index: Int) -> String {
+        let price = pricesPerPeriod[index].price
+        return "$\(String(format: "%.2f", price))"
+    }
+    
+    func getDateForIndex(of index: Int) -> String {
+        return dataConverter.convertDateToString(pricesPerPeriod[index].date)
+    }
     
 }
 
-// MODEL
-struct PriceDay: Identifiable {
-    let id = UUID()
-    let date: Int
-    let price: Double
+final class dataConverterClass {
+    var index = -1
+    
+    let dateFormatter: DateFormatter = {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd"
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            return formatter
+        }()
+    
+    let dateFormatterWithTime: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d MMM yyyy"
+        return formatter
+    }()
+        
+    func convertStringToDate(_ string: String) -> Date {
+        return dateFormatter.date(from: string) ?? Date()
+    }
+    
+    func convertDateToString(_ date: Date) -> String {
+        return dateFormatterWithTime.string(from: date)
+    }
+    
+    func getIndex() -> Int {
+        index += 1
+        return index
+        
+    }
 }

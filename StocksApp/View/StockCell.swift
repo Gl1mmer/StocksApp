@@ -8,7 +8,7 @@
 import UIKit
 
 protocol StockCellDelegate: AnyObject {
-    func favoriteButtonTapped(of ticker: String)
+    func favoriteButtonTapped(of ticker: String, favoriteState: Bool)
 }
 
 class StockCell: UITableViewCell {
@@ -87,7 +87,8 @@ class StockCell: UITableViewCell {
     
     @objc private func favoriteButtonTapped() {
         guard let cellTicker = companyNameLabel.text else { return }
-        delegate?.favoriteButtonTapped(of: cellTicker)
+        let favState = (favoriteButton.tintColor == .systemGray4) ? false : true
+        delegate?.favoriteButtonTapped(of: cellTicker, favoriteState: favState)
     }
 
     private func setupUI() {

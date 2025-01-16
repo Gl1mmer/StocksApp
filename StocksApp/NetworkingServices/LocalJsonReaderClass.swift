@@ -7,19 +7,11 @@
 
 import UIKit
 
-enum NetworkingError: Error {
-    case couldNotReadLocalJSONFile
-    case couldNotDownloadImage
-    case couldNotGetPriceInfo
-    case InvalidURL
-}
-
 protocol LocalJsonReaderProtocol {
     func fetchStocks(completion: @escaping (Result<[StockProfilesModel], Error>)->Void)
 }
 
 final class LocalJsonReader: LocalJsonReaderProtocol {
-   
     func fetchStocks(completion: @escaping (Result<[StockProfilesModel], Error>)->Void) {
         guard let data = readLocalJSONFile(forName: "stockProfiles") else {
             completion(.failure(NetworkingError.couldNotReadLocalJSONFile))

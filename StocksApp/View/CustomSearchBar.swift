@@ -7,15 +7,14 @@
 
 import UIKit
 
-protocol CustomSearchBarDelegate {
+protocol CustomSearchBarDelegate: AnyObject {
     func didBeginEditing()
     func didLeftButtonTapped()
     func showSearchResults(for text: String)
 }
 
 final class CustomSearchBar: UIView {
-    
-    var delegate: CustomSearchBarDelegate?
+    weak var delegate: CustomSearchBarDelegate?
     
     private lazy var searchTextField: UITextField = {
         let tf = UITextField()
@@ -110,10 +109,10 @@ final class CustomSearchBar: UIView {
         if (textField.text == "") {
             rightButton.isHidden = true
             delegate?.didBeginEditing()
-            // show two collectionViews
         } else {
             rightButton.isHidden = false
-            delegate?.showSearchResults(for: textField.text!)
+            print("searching")
+            delegate?.showSearchResults(for: textField.text ?? "Default")
         }
     }
 }
@@ -127,5 +126,4 @@ extension CustomSearchBar: UITextFieldDelegate{
 
 extension UIColor {
     public static var myColor = UIColor(red: 26/255, green: 26/255, blue: 26/255, alpha: 1)
-    
 }

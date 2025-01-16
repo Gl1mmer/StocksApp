@@ -16,7 +16,7 @@ final class PriceInfoFetcher: PriceInfoFetcherProtocol {
                           completion: @escaping (Result<(PriceReturnModel), Error>)->Void) {
         let ticker = ticker
         guard let url = URL(string: "https://finnhub.io/api/v1/quote?token=csri4e1r01qhtrfn4ue0csri4e1r01qhtrfn4ueg&symbol=\(ticker)") else {
-            completion(.failure(NetworkingError.InvalidURL))
+            completion(.failure(NetworkingError.invalidURL))
             return
         }
         let task = URLSession.shared.dataTask(with: url) {data, _, error in

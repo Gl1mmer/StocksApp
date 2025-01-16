@@ -8,9 +8,6 @@
 import UIKit
 
 final class SearchEmptyView: UIView {
-    
-    private let model : StocksViewModel
-    
     private let popularLabel: UILabel = {
         let label = UILabel()
         label.text = "Popular requests"
@@ -54,10 +51,13 @@ final class SearchEmptyView: UIView {
     }()
     
     
-    init(model: StocksViewModel) {
-        self.model = model
+    init(delegate: UICollectionViewDataSource & UICollectionViewDelegateFlowLayout) {
         super.init(frame: .zero)
         self.setupUI()
+        popularStocksCollectionView.delegate = delegate
+        popularStocksCollectionView.dataSource = delegate
+        recentStocksCollectionView.delegate = delegate
+        recentStocksCollectionView.dataSource = delegate
     }
     
     required init?(coder: NSCoder) {
@@ -90,28 +90,5 @@ final class SearchEmptyView: UIView {
             recentStocksCollectionView.trailingAnchor.constraint(equalTo: trailingAnchor),
             recentStocksCollectionView.heightAnchor.constraint(equalToConstant: 88),
             ])
-        
-    }
-    
-    
-}
-
-extension SearchEmptyView: UICollectionViewDelegate, UICollectionViewDataSource {
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        model.getAllStocks().count
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CustomCollectionViewCell.identifier, for: indexPath) as? CustomCollectionViewCell else { fatalError("Error dequeueing cell") }
-        cell.configure(model.getStock(index: indexPath.row).name)
-        return cell
-    }
-    
-}
-
-extension SearchEmptyView: UICollectionViewDelegateFlowLayout {
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return CGSize(width: 80, height: 40)
     }
 }
