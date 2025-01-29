@@ -185,6 +185,8 @@ final class StocksViewController: UIViewController {
 
 extension StocksViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        print("called2")
+
         return model.getStocks(for: .tableView).count
     }
     
@@ -192,6 +194,7 @@ extension StocksViewController: UITableViewDelegate, UITableViewDataSource {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: StockCell.identifier, for: indexPath) as? StockCell else {
             fatalError("Could not dequeue cell [1]")
         }
+        print("called")
         if let url = URL(string: model.getStock(at: indexPath.row, for: .tableView).logoString) {
             cell.companySymbolImageView.loadImageFromURL(url: url)
         }

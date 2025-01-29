@@ -24,181 +24,15 @@ struct StockDetailView: View {
         self.favoriteChanged = favoriteChanged
     }
     
-    fileprivate func extractedFunc() -> HStack<ForEach<[String], String, Button<some View>>> {
-        return HStack(spacing: 15) {
-            ForEach(["D", "3D", "W", "2W", "M", "All"], id: \.self) { period in
-                Button {
-                    viewModel.getPriceForPeriod(of: period)
-                } label: {
-                    Text(period)
-                        .font(.subheadline)
-                        .foregroundStyle(Color.black)
-                        .frame(width: 42, height: 44)
-                        .background(.gray.opacity(0.1))
-                        .cornerRadius(12)
-                    
-                }
-            }
-        }
-    }
-    
     var body: some View {
         VStack {
-            HStack {
-                Button {
-                    presentationMode.wrappedValue.dismiss()
-                } label: {
-                    Image(systemName: "arrow.left")
-                        .font(.title2)
-                        .foregroundStyle(Color.black)
-                }
-                
-                Spacer()
-                
-                VStack {
-                    Text(viewModel.dataModel.name)
-                        .font(.title2)
-                    Text(viewModel.dataModel.name)
-                        .font(.caption2)
-                }
-                
-                Spacer()
-                
-                Button {
-                    viewModel.favoriteButtonTapped()
-                    favoriteChanged(viewModel.dataModel.isFavorite)
-                } label: {
-                    if viewModel.dataModel.isFavorite {
-                        Image(systemName: "star.fill")
-                            .foregroundStyle(Color.yellow)
-                            .font(.title3)
-                    } else {
-                        Image(systemName: "star")
-                            .foregroundStyle(Color.black)
-                            .font(.title3)
-                    }
-                }
-            }
-            .padding()
-            
-            ScrollView(.horizontal, showsIndicators: false ,content: {
-                HStack(spacing: 20) {
-                    Button("Chart") {
-                        
-                    }
-                    .fontWeight(.bold)
-                    .font(.system(size: 24))
-                    .foregroundStyle(Color.black)
-                    Button("Summary") {
-                        
-                    }
-                    Button("News") {
-                        
-                    }
-                    Button("Forecasts") {
-                        
-                    }
-                    Button("Ideas") {
-                        
-                    }
-                    Button("Events") {
-                        
-                    }
-                }
-                .fontWeight(.light)
-                .font(.system(size: 20))
-                .foregroundStyle(Color.gray)
-                .padding(.leading, 20)
-                
-            })
-            
-            VStack {
-                Text("$\(String(describing: viewModel.dataModel.price))")
-                    .font(.largeTitle)
-                    .bold()
-                if (viewModel.dataModel.change >= 0) {
-                    Text("+$\(String(describing: viewModel.dataModel.change)) (\(String(describing: viewModel.dataModel.changePercent))%)")
-                        .font(.subheadline)
-                        .foregroundStyle(Color.green)
-                } else {
-                    Text("-$\(String(describing: abs(viewModel.dataModel.change))) (\(String(describing: abs(viewModel.dataModel.changePercent)))%)")
-                        .font(.subheadline)
-                        .foregroundStyle(Color.red)
-                }
-            }
-            .padding(.top, 48)
-            
-            Chart {
-                ForEach(viewModel.pricesPerPeriod) { priceDay in
-                    LineMark(
-                        x: .value("id", priceDay.id),
-                        y: .value("Price", priceDay.price)
-                    )
-                    AreaMark(
-                        x: .value("id", priceDay.id),
-                        yStart: .value("Price", 0),
-                        yEnd: .value("Price", priceDay.price)
-                            )
-                        .foregroundStyle(
-                            Color.pink.opacity(0.2)
-                        )
-                }
-                .foregroundStyle(Color.pink)
-                
-                if let selectedData = viewModel.pricesPerPeriod.first(where: { $0.id == selectedID }) {
-                    PointMark(
-                        x: .value("id", selectedData.id),
-                        y: .value("Price", selectedData.price)
-                    )
-                    .symbol {
-                        ZStack {
-                            Circle()
-                                .strokeBorder(Color.white, lineWidth: 4)
-                                .frame(width: 12, height: 12)
-                            Circle()
-                                .fill(Color.pink)
-                                .frame(width: 8, height: 8)
-                        }
-                    }
-                }
-                
-                if let selectedID {
-                    RuleMark(x: .value("Index", selectedID))
-                        .foregroundStyle(Color.clear)
-                        .annotation(position: .top, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
-                            VStack {
-                                Text(viewModel.getPriceForIndex(of: selectedID))
-                                    .font(.title3)
-                                Text(viewModel.getDateForIndex(of: selectedID))
-                                    .font(.caption)
-                                    
-                            }
-                            .foregroundStyle(Color.white)
-                            .padding(12)
-                            .background(RoundedRectangle(cornerRadius: 10).fill(.pink.gradient).opacity(0.95))
-                        }
-                }
-            }
-            .frame(height: 260)
-            .padding(.top, 100)
-            .chartXAxis(.hidden)
-            .chartYAxis(.hidden)
-            .chartXSelection(value: $selectedID)
-            
-            extractedFunc()
-            .padding(.vertical, 14)
-            .padding(.horizontal, 16)
-            
+            navigationBarView
+            infoOptionsView
+            priceInfoView
+            chartsView
+            rangeButtonsView
             Spacer()
-            
-            Button("Buy for $\(String(describing: viewModel.dataModel.price))") {
-                viewModel.isShowAlert = true
-            }
-            .foregroundStyle(Color.white)
-            .frame(width: 328, height: 56)
-            .background(.black)
-            .cornerRadius(16)
-            .padding()
+            buyButtonView
             .alert("Buy for $\(String(describing: viewModel.dataModel.price))", isPresented: $viewModel.isShowAlert) {
                 Button("Buy") {
                     viewModel.isBoughtStock = true
@@ -222,4 +56,186 @@ struct StockDetailView: View {
     }
 }
 
+extension StockDetailView {
+    
+    private var navigationBarView: some View {
+        HStack {
+            Button {
+                presentationMode.wrappedValue.dismiss()
+            } label: {
+                Image(systemName: "arrow.left")
+                    .font(.title2)
+                    .foregroundStyle(Color.black)
+            }
+            
+            Spacer()
+            
+            VStack {
+                Text(viewModel.dataModel.name)
+                    .font(.title2)
+                Text(viewModel.dataModel.name)
+                    .font(.caption2)
+            }
+            
+            Spacer()
+            
+            Button {
+                viewModel.favoriteButtonTapped()
+                favoriteChanged(viewModel.dataModel.isFavorite)
+            } label: {
+                if viewModel.dataModel.isFavorite {
+                    Image(systemName: "star.fill")
+                        .foregroundStyle(Color.yellow)
+                        .font(.title3)
+                } else {
+                    Image(systemName: "star")
+                        .foregroundStyle(Color.black)
+                        .font(.title3)
+                }
+            }
+        }
+        .padding()
+    }
+    
+    private var infoOptionsView: some View {
+        ScrollView(.horizontal, showsIndicators: false ,content: {
+            HStack(spacing: 20) {
+                Button("Chart") {
+                    
+                }
+                .fontWeight(.bold)
+                .font(.system(size: 24))
+                .foregroundStyle(Color.black)
+                Button("Summary") {
+                    
+                }
+                Button("News") {
+                    
+                }
+                Button("Forecasts") {
+                    
+                }
+                Button("Ideas") {
+                    
+                }
+                Button("Events") {
+                    
+                }
+            }
+            .fontWeight(.light)
+            .font(.system(size: 20))
+            .foregroundStyle(Color.gray)
+            .padding(.leading, 20)
+            
+        })
+    }
+    
+    private var priceInfoView: some View {
+        VStack {
+            Text("$\(String(describing: viewModel.dataModel.price))")
+                .font(.largeTitle)
+                .bold()
+            if (viewModel.dataModel.change >= 0) {
+                Text("+$\(String(describing: viewModel.dataModel.change)) (\(String(describing: viewModel.dataModel.changePercent))%)")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.green)
+            } else {
+                Text("-$\(String(describing: abs(viewModel.dataModel.change))) (\(String(describing: abs(viewModel.dataModel.changePercent)))%)")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.red)
+            }
+        }
+        .padding(.top, 48)
+    }
+    
+    private var chartsView: some View {
+        Chart {
+            ForEach(viewModel.pricesPerPeriod) { priceDay in
+                LineMark(
+                    x: .value("id", priceDay.id),
+                    y: .value("Price", priceDay.price)
+                )
+                AreaMark(
+                    x: .value("id", priceDay.id),
+                    yStart: .value("Price", 0),
+                    yEnd: .value("Price", priceDay.price)
+                        )
+                    .foregroundStyle(
+                        Color.pink.opacity(0.2)
+                    )
+            }
+            .foregroundStyle(Color.pink)
+            
+            if let selectedData = viewModel.pricesPerPeriod.first(where: { $0.id == selectedID }) {
+                PointMark(
+                    x: .value("id", selectedData.id),
+                    y: .value("Price", selectedData.price)
+                )
+                .symbol {
+                    ZStack {
+                        Circle()
+                            .strokeBorder(Color.white, lineWidth: 4)
+                            .frame(width: 12, height: 12)
+                        Circle()
+                            .fill(Color.pink)
+                            .frame(width: 8, height: 8)
+                    }
+                }
+            }
+            
+            if let selectedID {
+                RuleMark(x: .value("Index", selectedID))
+                    .foregroundStyle(Color.clear)
+                    .annotation(position: .top, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
+                        VStack {
+                            Text(viewModel.getPriceForIndex(of: selectedID))
+                                .font(.title3)
+                            Text(viewModel.getDateForIndex(of: selectedID))
+                                .font(.caption)
+                                
+                        }
+                        .foregroundStyle(Color.white)
+                        .padding(12)
+                        .background(RoundedRectangle(cornerRadius: 10).fill(.pink.gradient).opacity(0.95))
+                    }
+            }
+        }
+        .frame(height: 260)
+        .padding(.top, 100)
+        .chartXAxis(.hidden)
+        .chartYAxis(.hidden)
+        .chartXSelection(value: $selectedID)
+    }
+    
+    private var rangeButtonsView: some View {
+        HStack(spacing: 15) {
+            ForEach(["D", "3D", "W", "2W", "M", "All"], id: \.self) { period in
+                Button {
+                    viewModel.getPriceForPeriod(of: period)
+                } label: {
+                    Text(period)
+                        .font(.subheadline)
+                        .foregroundStyle(Color.black)
+                        .frame(width: 42, height: 44)
+                        .background(.gray.opacity(0.1))
+                        .cornerRadius(12)
+                    
+                }
+            }
+        }
+        .padding(.vertical, 14)
+        .padding(.horizontal, 16)
 
+    }
+    
+    private var buyButtonView: some View {
+        Button("Buy for $\(String(describing: viewModel.dataModel.price))") {
+            viewModel.isShowAlert = true
+        }
+        .foregroundStyle(Color.white)
+        .frame(width: 328, height: 56)
+        .background(.black)
+        .cornerRadius(16)
+        .padding()
+    }
+}

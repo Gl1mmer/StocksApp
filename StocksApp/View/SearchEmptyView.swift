@@ -89,6 +89,6 @@ final class SearchEmptyView: UIView {
             recentStocksCollectionView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
             recentStocksCollectionView.trailingAnchor.constraint(equalTo: trailingAnchor),
             recentStocksCollectionView.heightAnchor.constraint(equalToConstant: 88),
-            ])
+        ])
     }
 }

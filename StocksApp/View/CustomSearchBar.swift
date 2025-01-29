@@ -106,7 +106,7 @@ final class CustomSearchBar: UIView {
     }
     
     @objc func textFieldDidChange(_ textField: UITextField) {
-        if (textField.text == "") {
+        if textField.text == "" {
             rightButton.isHidden = true
             delegate?.didBeginEditing()
         } else {
