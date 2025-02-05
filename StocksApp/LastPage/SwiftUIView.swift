@@ -15,10 +15,6 @@ struct StockDetailView: View {
     private var coreDataControl: CoreDataControl
     @StateObject private var viewModel: ChartsViewModel
     
-    @State private var selectedID : Int?
-    @State private var selectedRange: String = "All"
-    @State private var selectedOption: String = "Chart"
-    
     init(stock: StockModel, coreData: CoreDataControl, favoriteChanged: @escaping ((Bool) -> Void)) {
         self.stock = stock
         self.coreDataControl = coreData
@@ -98,10 +94,10 @@ extension StockDetailView {
                 HStack(spacing: 20) {
                     ForEach(["Chart", "Summary", "News", "Forecasts", "Ideas", "Events"], id: \..self) { option in
                         Button(option) {
-                            selectedOption = option
+                            viewModel.selectedOption = option
                         }
-                        .font(selectedOption == option ? .montserrat(.bold, size: 20) : .montserrat(.light, size: 20))
-                            .foregroundColor(selectedOption == option ? .black : .gray)
+                        .font(viewModel.selectedOption == option ? .montserrat(.bold, size: 20) : .montserrat(.light, size: 20))
+                        .foregroundColor(viewModel.selectedOption == option ? .black : .gray)
                     }
                 }
                 .padding(.horizontal)
@@ -147,7 +143,7 @@ extension StockDetailView {
             }
             .foregroundStyle(Color.black)
             
-            if let selectedData = viewModel.pricesPerPeriod.first(where: { $0.id == selectedID }) {
+            if let selectedData = viewModel.pricesPerPeriod.first(where: { $0.id == viewModel.selectedID }) {
                 PointMark(
                     x: .value("id", selectedData.id),
                     y: .value("Price", selectedData.price)
@@ -164,16 +160,15 @@ extension StockDetailView {
                 }
             }
             
-            if let selectedID {
-                RuleMark(x: .value("Index", selectedID))
+            if let id = viewModel.selectedID {
+                RuleMark(x: .value("Index", id))
                     .foregroundStyle(Color.clear)
                     .annotation(position: .top, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
                         VStack {
-                            Text(viewModel.getPriceForIndex(of: selectedID))
+                            Text(viewModel.getPriceForIndex(of: id))
                                 .font(.montserrat(.bold, size: 16))
-                            Text(viewModel.getDateForIndex(of: selectedID))
+                            Text(viewModel.getDateForIndex(of: id))
                                 .font(.montserrat(.regular, size: 12))
-                                
                         }
                         .foregroundStyle(Color.white)
                         .padding(12)
@@ -183,7 +178,7 @@ extension StockDetailView {
         }
         .chartXAxis(.hidden)
         .chartYAxis(.hidden)
-        .chartXSelection(value: $selectedID)
+        .chartXSelection(value: $viewModel.selectedID)
     }
     
     private var rangeButtonsView: some View {
@@ -191,15 +186,15 @@ extension StockDetailView {
             ForEach(["D", "3D", "W", "2W", "M", "All"], id: \.self) { period in
                 Button {
                     withAnimation(.easeOut) {
-                        selectedRange = period
+                        viewModel.selectedRange = period
                     }
                     viewModel.getPriceForPeriod(of: period)
                 } label: {
                     Text(period)
-                        .font(selectedRange == period ? .montserrat(.bold, size: 12) :.montserrat(.regular, size: 12))
-                        .foregroundStyle(selectedRange == period ? Color.white : Color.black)
+                        .font(viewModel.selectedRange == period ? .montserrat(.bold, size: 12) :.montserrat(.regular, size: 12))
+                        .foregroundStyle(viewModel.selectedRange == period ? Color.white : Color.black)
                         .frame(width: 42, height: 44)
-                        .background(selectedRange == period ? .black : .gray.opacity(0.1))
+                        .background(viewModel.selectedRange == period ? .black : .gray.opacity(0.1))
                         .cornerRadius(12)
                     
                 }

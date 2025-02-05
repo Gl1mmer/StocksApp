@@ -13,6 +13,9 @@ final class ChartsViewModel: ObservableObject {
     @Published var isShowAlert: Bool = false
     @Published var isBoughtStock: Bool = false
     @Published var pricesPerPeriod: [PriceDay] = []
+    @Published var selectedID : Int?
+    @Published var selectedRange: String = "All"
+    @Published var selectedOption: String = "Chart"
     var coreDataManager: CoreDataControl
     var priceHistoryDownloader: PriceHistoryNetworkingProtocol
     
