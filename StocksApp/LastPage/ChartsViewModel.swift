@@ -8,10 +8,10 @@ import Foundation
 
 final class ChartsViewModel: ObservableObject {
     
+    var prices: [PriceDay] = []
     @Published var dataModel : StockModelChartsPage
     @Published var isShowAlert: Bool = false
     @Published var isBoughtStock: Bool = false
-    var prices: [PriceDay] = []
     @Published var pricesPerPeriod: [PriceDay] = []
     var coreDataManager: CoreDataControl
     var priceHistoryDownloader: PriceHistoryNetworkingProtocol

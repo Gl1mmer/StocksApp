@@ -101,7 +101,7 @@ final class StocksViewController: UIViewController {
         view.bringSubviewToFront(searchTextField)
                 
         NSLayoutConstraint.activate([
-            searchTextField.topAnchor.constraint(equalTo: view.topAnchor, constant: 68),
+            searchTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
             searchTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             searchTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             searchTextField.heightAnchor.constraint(equalToConstant: 48),
@@ -120,7 +120,7 @@ final class StocksViewController: UIViewController {
             companiesTableView.topAnchor.constraint(equalTo: buttonsView.bottomAnchor, constant: 8), // 20
             companiesTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             companiesTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor,constant: -16),
-            companiesTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            companiesTableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         ])
     }
     
