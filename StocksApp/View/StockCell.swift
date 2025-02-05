@@ -21,7 +21,7 @@ class StockCell: UITableViewCell {
     private let companyNameLabel: UILabel = {
         let label = UILabel()
         label.text = "Default"
-        label.font = .systemFont(ofSize: 18, weight: .bold)
+        label.font = .montserrat(.bold, size: 18)
         label.textColor = .label
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -39,7 +39,7 @@ class StockCell: UITableViewCell {
     private let companyAddInfoLabel: UILabel = {
         let label = UILabel()
         label.text = "Default"
-        label.font = .systemFont(ofSize: 11, weight: .regular)
+        label.font = .montserrat(.regular, size: 11)
         label.textColor = .label
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -48,7 +48,7 @@ class StockCell: UITableViewCell {
     private let currentPriceLabel: UILabel = {
         let label = UILabel()
         label.text = "Loading"
-        label.font = .systemFont(ofSize: 18, weight: .bold)
+        label.font = .montserrat(.bold, size: 18)
         label.textColor = .black
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -57,7 +57,7 @@ class StockCell: UITableViewCell {
     private let dayDeltaLabel: UILabel = {
         let label = UILabel()
         label.text = "Loading"
-        label.font = .systemFont(ofSize: 12, weight: .regular)
+        label.font = .montserrat(.regular, size: 12)
         label.textColor = .green
         label.translatesAutoresizingMaskIntoConstraints = false
         return label

@@ -16,6 +16,7 @@ struct StockDetailView: View {
     @StateObject private var viewModel: ChartsViewModel
     
     @State private var selectedID : Int?
+    @State private var selectedRange: String = "All"
     
     init(stock: StockModel, coreData: CoreDataControl, favoriteChanged: @escaping ((Bool) -> Void)) {
         self.stock = stock
@@ -71,10 +72,10 @@ extension StockDetailView {
             Spacer()
             
             VStack {
+                Text(viewModel.dataModel.ticker)
+                    .font(.montserrat(.bold, size: 18))
                 Text(viewModel.dataModel.name)
-                    .font(.title2)
-                Text(viewModel.dataModel.name)
-                    .font(.caption2)
+                    .font(.montserrat(.regular, size: 12))
             }
             
             Spacer()
@@ -103,8 +104,7 @@ extension StockDetailView {
                 Button("Chart") {
                     
                 }
-                .fontWeight(.bold)
-                .font(.system(size: 24))
+                .font(.montserrat(.bold, size: 24))
                 .foregroundStyle(Color.black)
                 Button("Summary") {
                     
@@ -122,26 +122,24 @@ extension StockDetailView {
                     
                 }
             }
-            .fontWeight(.light)
-            .font(.system(size: 20))
+            .font(.montserrat(.light, size: 20))
             .foregroundStyle(Color.gray)
             .padding(.leading, 20)
             
         })
     }
-    
+
     private var priceInfoView: some View {
         VStack {
             Text("$\(String(describing: viewModel.dataModel.price))")
-                .font(.largeTitle)
-                .bold()
+                .font(.montserrat(.bold, size: 28))
             if (viewModel.dataModel.change >= 0) {
                 Text("+$\(String(describing: viewModel.dataModel.change)) (\(String(describing: viewModel.dataModel.changePercent))%)")
-                    .font(.subheadline)
+                    .font(.montserrat(.regular, size: 12))
                     .foregroundStyle(Color.green)
             } else {
                 Text("-$\(String(describing: abs(viewModel.dataModel.change))) (\(String(describing: abs(viewModel.dataModel.changePercent)))%)")
-                    .font(.subheadline)
+                    .font(.montserrat(.regular, size: 12))
                     .foregroundStyle(Color.red)
             }
         }
@@ -160,11 +158,19 @@ extension StockDetailView {
                     yStart: .value("Price", 0),
                     yEnd: .value("Price", priceDay.price)
                         )
-                    .foregroundStyle(
-                        Color.pink.opacity(0.2)
+                .foregroundStyle(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color.black.opacity(0.3),
+                            Color.black.opacity(0.1),
+                            Color.black.opacity(0.0)
+                        ]),
+                        startPoint: .top,
+                        endPoint: .bottom
                     )
+                )
             }
-            .foregroundStyle(Color.pink)
+            .foregroundStyle(Color.black)
             
             if let selectedData = viewModel.pricesPerPeriod.first(where: { $0.id == selectedID }) {
                 PointMark(
@@ -177,7 +183,7 @@ extension StockDetailView {
                             .strokeBorder(Color.white, lineWidth: 4)
                             .frame(width: 12, height: 12)
                         Circle()
-                            .fill(Color.pink)
+                            .fill(Color.black)
                             .frame(width: 8, height: 8)
                     }
                 }
@@ -189,14 +195,14 @@ extension StockDetailView {
                     .annotation(position: .top, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
                         VStack {
                             Text(viewModel.getPriceForIndex(of: selectedID))
-                                .font(.title3)
+                                .font(.montserrat(.bold, size: 16))
                             Text(viewModel.getDateForIndex(of: selectedID))
-                                .font(.caption)
+                                .font(.montserrat(.regular, size: 12))
                                 
                         }
                         .foregroundStyle(Color.white)
                         .padding(12)
-                        .background(RoundedRectangle(cornerRadius: 10).fill(.pink.gradient).opacity(0.95))
+                        .background(RoundedRectangle(cornerRadius: 10).fill(.black.gradient).opacity(0.95))
                     }
             }
         }
@@ -211,13 +217,16 @@ extension StockDetailView {
         HStack(spacing: 15) {
             ForEach(["D", "3D", "W", "2W", "M", "All"], id: \.self) { period in
                 Button {
+                    withAnimation(.easeOut) {
+                        selectedRange = period
+                    }
                     viewModel.getPriceForPeriod(of: period)
                 } label: {
                     Text(period)
-                        .font(.subheadline)
-                        .foregroundStyle(Color.black)
+                        .font(selectedRange == period ? .montserrat(.bold, size: 12) :.montserrat(.regular, size: 12))
+                        .foregroundStyle(selectedRange == period ? Color.white : Color.black)
                         .frame(width: 42, height: 44)
-                        .background(.gray.opacity(0.1))
+                        .background(selectedRange == period ? .black : .gray.opacity(0.1))
                         .cornerRadius(12)
                     
                 }
@@ -229,10 +238,13 @@ extension StockDetailView {
     }
     
     private var buyButtonView: some View {
-        Button("Buy for $\(String(describing: viewModel.dataModel.price))") {
+        Button {
             viewModel.isShowAlert = true
+        } label: {
+            Text("Buy for $\(String(describing: viewModel.dataModel.price))")
+                .font(.montserrat(.semibold, size: 16))
+                .foregroundStyle(Color.white)
         }
-        .foregroundStyle(Color.white)
         .frame(width: 328, height: 56)
         .background(.black)
         .cornerRadius(16)

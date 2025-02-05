@@ -35,7 +35,7 @@ final class StocksViewController: UIViewController {
         let button  = UIButton()
         button.setTitle("Stocks", for: .normal)
         button.setTitleColor(.black, for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 28, weight: .bold)
+        button.titleLabel?.font = .montserrat(.bold, size: 28)
         button.addTarget(self, action: #selector(stocksButtonTapped), for: .touchUpInside)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
@@ -45,7 +45,8 @@ final class StocksViewController: UIViewController {
         let button  = UIButton()
         button.setTitle("Favourite", for: .normal)
         button.setTitleColor(.systemGray4, for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 18, weight: .bold)
+        button.titleLabel?.font = .montserrat(.bold, size: 18)
+//        button.titleLabel?.font = .systemFont(ofSize: 18, weight: .bold)
         button.addTarget(self, action: #selector(favouritesButtonTapped), for: .touchUpInside)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
@@ -62,7 +63,7 @@ final class StocksViewController: UIViewController {
         let label = UILabel()
         label.text = "Stocks"
         label.textColor = .label
-        label.font = .systemFont(ofSize: 18, weight: .bold)
+        label.font = .montserrat(.bold, size: 18)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -71,7 +72,7 @@ final class StocksViewController: UIViewController {
         let button  = UIButton()
         button.setTitle("Show more", for: .normal)
         button.setTitleColor(.label, for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 12, weight: .semibold)
+        button.titleLabel?.font = .montserrat(.semibold, size: 12)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -155,18 +156,18 @@ final class StocksViewController: UIViewController {
     }
     
     @objc private func stocksButtonTapped() {
-        stocksButton.titleLabel?.font = .systemFont(ofSize: 28, weight: .bold)
+        stocksButton.titleLabel?.font = .montserrat(.bold, size: 28)
         stocksButton.setTitleColor(.black, for: .normal)
-        favouriteButton.titleLabel?.font = .systemFont(ofSize: 18, weight: .bold)
+        favouriteButton.titleLabel?.font = .montserrat(.bold, size: 18)
         favouriteButton.setTitleColor(.systemGray4, for: .normal)
         model.showFavoriteStocks(false)
         companiesTableView.reloadData()
     }
 
     @objc private func favouritesButtonTapped() {
-        favouriteButton.titleLabel?.font = .systemFont(ofSize: 28, weight: .bold)
+        favouriteButton.titleLabel?.font = .montserrat(.bold, size: 28)
         favouriteButton.setTitleColor(.black, for: .normal)
-        stocksButton.titleLabel?.font = .systemFont(ofSize: 18, weight: .bold)
+        stocksButton.titleLabel?.font = .montserrat(.bold, size: 18)
         stocksButton.setTitleColor(.systemGray4, for: .normal)
         model.showFavoriteStocks(true)
         companiesTableView.reloadData()
@@ -185,8 +186,6 @@ final class StocksViewController: UIViewController {
 
 extension StocksViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        print("called2")
-
         return model.getStocks(for: .tableView).count
     }
     
@@ -194,7 +193,6 @@ extension StocksViewController: UITableViewDelegate, UITableViewDataSource {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: StockCell.identifier, for: indexPath) as? StockCell else {
             fatalError("Could not dequeue cell [1]")
         }
-        print("called")
         if let url = URL(string: model.getStock(at: indexPath.row, for: .tableView).logoString) {
             cell.companySymbolImageView.loadImageFromURL(url: url)
         }

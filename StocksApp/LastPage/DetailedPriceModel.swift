@@ -1,11 +1,11 @@
 //
-//  ChartsVewModel.swift
+//  DetailedPriceModel.swift
 //  StocksApp
 //
-//  Created by Amankeldi Zhetkergen on 02.01.2025.
+//  Created by Amankeldi Zhetkergen on 03.02.2025.
 //
 
-import UIKit
+import SwiftUI
 
 struct PriceDay: Identifiable {
     let id: Int
@@ -37,4 +37,3 @@ struct TimeSeriesDaily: Codable {
         case the1Open = "1. open"
     }
 }
-
