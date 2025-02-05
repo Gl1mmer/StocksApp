@@ -13,7 +13,7 @@ class CustomCollectionViewCell: UICollectionViewCell {
     private let stockNameLabel: UILabel = {
         let label = UILabel()
         label.text = "Some text"
-        label.font = .systemFont(ofSize: 12)
+        label.font = .montserrat(.regular, size: 12)
         label.textColor = .label
         label.layer.cornerRadius = 20
         label.clipsToBounds = true

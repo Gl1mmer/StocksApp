@@ -11,7 +11,7 @@ final class SearchEmptyView: UIView {
     private let popularLabel: UILabel = {
         let label = UILabel()
         label.text = "Popular requests"
-        label.font = .systemFont(ofSize: 18, weight: .bold)
+        label.font = .montserrat(.bold, size: 18)
         label.textColor = .black
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -32,7 +32,7 @@ final class SearchEmptyView: UIView {
     private let recentLabel: UILabel = {
         let label = UILabel()
         label.text = "You’ve searched for this"
-        label.font = .systemFont(ofSize: 18, weight: .bold)
+        label.font = .montserrat(.bold, size: 18)
         label.textColor = .black
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -89,6 +89,6 @@ final class SearchEmptyView: UIView {
             recentStocksCollectionView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
             recentStocksCollectionView.trailingAnchor.constraint(equalTo: trailingAnchor),
             recentStocksCollectionView.heightAnchor.constraint(equalToConstant: 88),
-            ])
+        ])
     }
 }

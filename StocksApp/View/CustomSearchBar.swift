@@ -22,7 +22,7 @@ final class CustomSearchBar: UIView {
             string: "Find company or ticker",
             attributes: [
                 .foregroundColor: UIColor.myColor,
-                .font: UIFont.systemFont(ofSize: 14, weight: .regular)])
+                .font: UIFont.montserrat(.regular, size: 14)])
         tf.translatesAutoresizingMaskIntoConstraints = false
         tf.addTarget(self, action: #selector(textFieldDidChange(_:)), for: .editingChanged)
         return tf
@@ -106,7 +106,7 @@ final class CustomSearchBar: UIView {
     }
     
     @objc func textFieldDidChange(_ textField: UITextField) {
-        if (textField.text == "") {
+        if textField.text == "" {
             rightButton.isHidden = true
             delegate?.didBeginEditing()
         } else {
