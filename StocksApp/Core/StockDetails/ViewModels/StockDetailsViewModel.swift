@@ -6,7 +6,7 @@
 //
 import Foundation
 
-final class ChartsViewModel: ObservableObject {
+final class StockDetailsViewModel: ObservableObject {
     
     var prices: [PriceDay] = []
     @Published var dataModel : StockModelChartsPage
@@ -17,11 +17,11 @@ final class ChartsViewModel: ObservableObject {
     @Published var selectedRange: String = "All"
     @Published var selectedOption: String = "Chart"
     var coreDataManager: CoreDataControl
-    var priceHistoryDownloader: PriceHistoryNetworkingProtocol
+    var priceHistoryDownloader: PriceHistoryServiceProtocol
     
     let dataConverter = dataConverterClass()
     
-    init(stock: StockModel, coreData: CoreDataControl, priceHistoryNetworking: PriceHistoryNetworkingProtocol) {
+    init(stock: StockModel, coreData: CoreDataControl, priceHistoryNetworking: PriceHistoryServiceProtocol) {
         self.dataModel = StockModelChartsPage(
                     ticker: stock.ticker,
                     name: stock.name,

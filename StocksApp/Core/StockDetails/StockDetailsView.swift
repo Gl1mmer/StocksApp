@@ -8,17 +8,17 @@
 import SwiftUI
 import Charts
 
-struct StockDetailView: View {
+struct StockDetailsView: View {
     @Environment(\.presentationMode) var presentationMode
     private var stock: StockModel
     var favoriteChanged: ((Bool) -> Void)
     private var coreDataControl: CoreDataControl
-    @StateObject private var viewModel: ChartsViewModel
+    @StateObject private var viewModel: StockDetailsViewModel
     
     init(stock: StockModel, coreData: CoreDataControl, favoriteChanged: @escaping ((Bool) -> Void)) {
         self.stock = stock
         self.coreDataControl = coreData
-        _viewModel = StateObject(wrappedValue: ChartsViewModel(stock: stock, coreData: coreData, priceHistoryNetworking: PriceHistoryNetworkingClass()))
+        _viewModel = StateObject(wrappedValue: StockDetailsViewModel(stock: stock, coreData: coreData, priceHistoryNetworking: PriceHistoryService()))
         self.favoriteChanged = favoriteChanged
     }
     
@@ -56,11 +56,11 @@ struct StockDetailView: View {
 }
 
 #Preview {
-    StockDetailView(stock: StockModel(ticker: "IBM", name: "Apple Inc.", logoString: "logo", price: 123.12, change: -12.1, changePercent: -10.1, favorite: true), coreData: CoreDataControl()) { _ in
+    StockDetailsView(stock: StockModel(ticker: "IBM", name: "Apple Inc.", logoString: "logo", price: 123.12, change: -12.1, changePercent: -10.1, favorite: true), coreData: CoreDataControl()) { _ in
     }
 }
 
-extension StockDetailView {
+extension StockDetailsView {
     
     private var navigationBarView: some View {
         HStack {
