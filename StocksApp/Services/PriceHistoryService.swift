@@ -7,11 +7,11 @@
 
 import UIKit
 
-protocol PriceHistoryNetworkingProtocol {
+protocol PriceHistoryServiceProtocol {
     func fetchPriceHistory(of ticker: String, completion: @escaping (Result<(Stock), Error>)->Void)
 }
 
-final class PriceHistoryNetworkingClass: PriceHistoryNetworkingProtocol {
+final class PriceHistoryService: PriceHistoryServiceProtocol {
     func fetchPriceHistory(of ticker: String, completion: @escaping (Result<(Stock), Error>)->Void) {
         guard let url = URL(string: "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=\(ticker)&apikey=EPANGJROXIT9WU8L") else {
             return completion(.failure(NetworkingError.invalidURL))

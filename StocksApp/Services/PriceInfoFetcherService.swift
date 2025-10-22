@@ -7,11 +7,11 @@
 
 import UIKit
 
-protocol PriceInfoFetcherProtocol {
+protocol PriceInfoFetcherServiceProtocol {
     func fetchPriceInfo(of ticker: String, completion: @escaping (Result<(PriceReturnModel), Error>)->Void)
 }
 
-final class PriceInfoFetcher: PriceInfoFetcherProtocol {
+final class PriceInfoFetcherService: PriceInfoFetcherServiceProtocol {
       func fetchPriceInfo(of ticker: String,
                           completion: @escaping (Result<(PriceReturnModel), Error>)->Void) {
         let ticker = ticker

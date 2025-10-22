@@ -1,4 +1,3 @@
-//
 //  SearchEmptyView.swift
 //  StocksApp
 //
@@ -16,6 +15,8 @@ final class SearchEmptyView: UIView {
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
+    
+    weak var delegate : StocksViewController?
     
     private let popularStocksCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
@@ -51,13 +52,14 @@ final class SearchEmptyView: UIView {
     }()
     
     
-    init(delegate: UICollectionViewDataSource & UICollectionViewDelegateFlowLayout) {
+    init(delegate: StocksViewController) {
         super.init(frame: .zero)
         self.setupUI()
-        popularStocksCollectionView.delegate = delegate
-        popularStocksCollectionView.dataSource = delegate
-        recentStocksCollectionView.delegate = delegate
-        recentStocksCollectionView.dataSource = delegate
+        self.delegate = delegate
+        popularStocksCollectionView.delegate = self.delegate
+        popularStocksCollectionView.dataSource = self.delegate
+        recentStocksCollectionView.delegate = self.delegate
+        recentStocksCollectionView.dataSource = self.delegate
     }
     
     required init?(coder: NSCoder) {

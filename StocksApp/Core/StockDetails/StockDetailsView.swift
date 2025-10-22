@@ -8,29 +8,32 @@
 import SwiftUI
 import Charts
 
-struct StockDetailView: View {
+struct StockDetailsView: View {
     @Environment(\.presentationMode) var presentationMode
     private var stock: StockModel
     var favoriteChanged: ((Bool) -> Void)
     private var coreDataControl: CoreDataControl
-    @StateObject private var viewModel: ChartsViewModel
-    
-    @State private var selectedID : Int?
-    @State private var selectedRange: String = "All"
+    @StateObject private var viewModel: StockDetailsViewModel
     
     init(stock: StockModel, coreData: CoreDataControl, favoriteChanged: @escaping ((Bool) -> Void)) {
         self.stock = stock
         self.coreDataControl = coreData
-        _viewModel = StateObject(wrappedValue: ChartsViewModel(stock: stock, coreData: coreData, priceHistoryNetworking: PriceHistoryNetworkingClass()))
+        _viewModel = StateObject(wrappedValue: StockDetailsViewModel(stock: stock, coreData: coreData, priceHistoryNetworking: PriceHistoryService()))
         self.favoriteChanged = favoriteChanged
     }
     
     var body: some View {
         VStack {
             navigationBarView
+                .padding()
+            
             infoOptionsView
+            Spacer()
             priceInfoView
+            Spacer()
             chartsView
+                .frame(height: min(UIScreen.main.bounds.height * 0.35, 300))
+            Spacer()
             rangeButtonsView
             Spacer()
             buyButtonView
@@ -53,11 +56,11 @@ struct StockDetailView: View {
 }
 
 #Preview {
-    StockDetailView(stock: StockModel(ticker: "IBM", name: "Apple Inc.", logoString: "logo", price: 123.12, change: -12.1, changePercent: -10.1, favorite: true), coreData: CoreDataControl()) { _ in
+    StockDetailsView(stock: StockModel(ticker: "IBM", name: "Apple Inc.", logoString: "logo", price: 123.12, change: -12.1, changePercent: -10.1, favorite: true), coreData: CoreDataControl()) { _ in
     }
 }
 
-extension StockDetailView {
+extension StockDetailsView {
     
     private var navigationBarView: some View {
         HStack {
@@ -68,82 +71,50 @@ extension StockDetailView {
                     .font(.title2)
                     .foregroundStyle(Color.black)
             }
-            
             Spacer()
-            
             VStack {
                 Text(viewModel.dataModel.ticker)
                     .font(.montserrat(.bold, size: 18))
                 Text(viewModel.dataModel.name)
                     .font(.montserrat(.regular, size: 12))
             }
-            
             Spacer()
-            
             Button {
                 viewModel.favoriteButtonTapped()
                 favoriteChanged(viewModel.dataModel.isFavorite)
             } label: {
-                if viewModel.dataModel.isFavorite {
-                    Image(systemName: "star.fill")
-                        .foregroundStyle(Color.yellow)
-                        .font(.title3)
-                } else {
-                    Image(systemName: "star")
-                        .foregroundStyle(Color.black)
-                        .font(.title3)
-                }
+                Image(systemName: viewModel.dataModel.isFavorite ? "star.fill" : "star")
+                                    .foregroundColor(viewModel.dataModel.isFavorite ? .yellow : .black)
+                                    .font(.title3)
             }
         }
-        .padding()
     }
-    
     private var infoOptionsView: some View {
-        ScrollView(.horizontal, showsIndicators: false ,content: {
-            HStack(spacing: 20) {
-                Button("Chart") {
-                    
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 20) {
+                    ForEach(["Chart", "Summary", "News", "Forecasts", "Ideas", "Events"], id: \..self) { option in
+                        Button(option) {
+                            viewModel.selectedOption = option
+                        }
+                        .font(viewModel.selectedOption == option ? .montserrat(.bold, size: 20) : .montserrat(.light, size: 20))
+                        .foregroundColor(viewModel.selectedOption == option ? .black : .gray)
+                    }
                 }
-                .font(.montserrat(.bold, size: 24))
-                .foregroundStyle(Color.black)
-                Button("Summary") {
-                    
-                }
-                Button("News") {
-                    
-                }
-                Button("Forecasts") {
-                    
-                }
-                Button("Ideas") {
-                    
-                }
-                Button("Events") {
-                    
-                }
+                .padding(.horizontal)
             }
-            .font(.montserrat(.light, size: 20))
-            .foregroundStyle(Color.gray)
-            .padding(.leading, 20)
-            
-        })
-    }
-
+        }
+    
     private var priceInfoView: some View {
         VStack {
             Text("$\(String(describing: viewModel.dataModel.price))")
                 .font(.montserrat(.bold, size: 28))
-            if (viewModel.dataModel.change >= 0) {
-                Text("+$\(String(describing: viewModel.dataModel.change)) (\(String(describing: viewModel.dataModel.changePercent))%)")
-                    .font(.montserrat(.regular, size: 12))
-                    .foregroundStyle(Color.green)
-            } else {
-                Text("-$\(String(describing: abs(viewModel.dataModel.change))) (\(String(describing: abs(viewModel.dataModel.changePercent)))%)")
-                    .font(.montserrat(.regular, size: 12))
-                    .foregroundStyle(Color.red)
-            }
+            Text(viewModel.dataModel.change >= 0 ?
+                 "+$\(String(describing: viewModel.dataModel.change)) (\(String(describing: viewModel.dataModel.changePercent))%)" :
+                    "-$\(String(describing: abs(viewModel.dataModel.change))) (\(String(describing: abs(viewModel.dataModel.changePercent)))%)")
+            .font(viewModel.dataModel.change >= 0 ? .montserrat(.regular, size: 12) : .montserrat(.regular, size: 12))
+            .foregroundStyle(viewModel.dataModel.change >= 0 ? Color.green : Color.red)
         }
-        .padding(.top, 48)
+        .padding(.vertical)
     }
     
     private var chartsView: some View {
@@ -172,7 +143,7 @@ extension StockDetailView {
             }
             .foregroundStyle(Color.black)
             
-            if let selectedData = viewModel.pricesPerPeriod.first(where: { $0.id == selectedID }) {
+            if let selectedData = viewModel.pricesPerPeriod.first(where: { $0.id == viewModel.selectedID }) {
                 PointMark(
                     x: .value("id", selectedData.id),
                     y: .value("Price", selectedData.price)
@@ -189,16 +160,15 @@ extension StockDetailView {
                 }
             }
             
-            if let selectedID {
-                RuleMark(x: .value("Index", selectedID))
+            if let id = viewModel.selectedID {
+                RuleMark(x: .value("Index", id))
                     .foregroundStyle(Color.clear)
                     .annotation(position: .top, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
                         VStack {
-                            Text(viewModel.getPriceForIndex(of: selectedID))
+                            Text(viewModel.getPriceForIndex(of: id))
                                 .font(.montserrat(.bold, size: 16))
-                            Text(viewModel.getDateForIndex(of: selectedID))
+                            Text(viewModel.getDateForIndex(of: id))
                                 .font(.montserrat(.regular, size: 12))
-                                
                         }
                         .foregroundStyle(Color.white)
                         .padding(12)
@@ -206,11 +176,9 @@ extension StockDetailView {
                     }
             }
         }
-        .frame(height: 260)
-        .padding(.top, 100)
         .chartXAxis(.hidden)
         .chartYAxis(.hidden)
-        .chartXSelection(value: $selectedID)
+        .chartXSelection(value: $viewModel.selectedID)
     }
     
     private var rangeButtonsView: some View {
@@ -218,22 +186,21 @@ extension StockDetailView {
             ForEach(["D", "3D", "W", "2W", "M", "All"], id: \.self) { period in
                 Button {
                     withAnimation(.easeOut) {
-                        selectedRange = period
+                        viewModel.selectedRange = period
                     }
                     viewModel.getPriceForPeriod(of: period)
                 } label: {
                     Text(period)
-                        .font(selectedRange == period ? .montserrat(.bold, size: 12) :.montserrat(.regular, size: 12))
-                        .foregroundStyle(selectedRange == period ? Color.white : Color.black)
+                        .font(viewModel.selectedRange == period ? .montserrat(.bold, size: 12) :.montserrat(.regular, size: 12))
+                        .foregroundStyle(viewModel.selectedRange == period ? Color.white : Color.black)
                         .frame(width: 42, height: 44)
-                        .background(selectedRange == period ? .black : .gray.opacity(0.1))
+                        .background(viewModel.selectedRange == period ? .black : .gray.opacity(0.1))
                         .cornerRadius(12)
                     
                 }
             }
         }
-        .padding(.vertical, 14)
-        .padding(.horizontal, 16)
+        .padding(.horizontal)
 
     }
     
@@ -244,10 +211,11 @@ extension StockDetailView {
             Text("Buy for $\(String(describing: viewModel.dataModel.price))")
                 .font(.montserrat(.semibold, size: 16))
                 .foregroundStyle(Color.white)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.black)
+                .cornerRadius(16)
         }
-        .frame(width: 328, height: 56)
-        .background(.black)
-        .cornerRadius(16)
         .padding()
     }
 }

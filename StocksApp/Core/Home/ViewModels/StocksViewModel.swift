@@ -20,12 +20,12 @@ final class StocksViewModel {
     private var searchQuery: String = ""
 
     private let localJsonReader: LocalJsonReaderProtocol
-    private let priceInfoFetcher: PriceInfoFetcherProtocol
+    private let priceInfoFetcher: PriceInfoFetcherServiceProtocol
     private let coreDataControl: CoreDataControl
 
     init(
         localJsonReader: LocalJsonReaderProtocol,
-        priceInfoFetcher: PriceInfoFetcherProtocol,
+        priceInfoFetcher: PriceInfoFetcherServiceProtocol,
         coreDataControl: CoreDataControl
     ) {
         self.localJsonReader = localJsonReader
