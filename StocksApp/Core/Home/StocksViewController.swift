@@ -241,6 +241,7 @@ extension StocksViewController: UICollectionViewDelegateFlowLayout {
 
 extension StocksViewController: StockCellDelegate {
     func favoriteButtonTapped(of ticker: String, favoriteState: Bool) {
+        print("\(ticker) and \(favoriteState)")
         model.updateStockFavorite(ticker: ticker, favorite: favoriteState)
         companiesTableView.reloadData()
     }
