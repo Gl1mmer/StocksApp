@@ -11,11 +11,12 @@ import SwiftUI
 final class StocksViewController: UIViewController {
     
     private let coreDataControl = CoreDataControl()
-    
     private lazy var model = StocksViewModel(localJsonReader: LocalJsonReader(), priceInfoFetcher: PriceInfoFetcherService(), coreDataControl: coreDataControl)
 
+    private let refresh = UIRefreshControl()
+
     private let searchTextField = CustomSearchBar()
-    
+
     private lazy var searchEmptyView = SearchEmptyView(delegate: self)
         
     private let companiesTableView: UITableView = {
@@ -88,6 +89,12 @@ final class StocksViewController: UIViewController {
                 self.companiesTableView.reloadData()
             }
         }
+        companiesTableView.refreshControl = refresh
+        refresh.addTarget(self, action: #selector(refreshData), for: .valueChanged)
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        companiesTableView.reloadData()
     }
 
     private func setupUI() {
@@ -178,11 +185,22 @@ final class StocksViewController: UIViewController {
     private func openNextPage(_ stock: StockModel) {
         let nextView = StockDetailsView(stock: stock, coreData: coreDataControl) { favorite in
             self.model.updateStockFavorite(ticker: stock.ticker, favorite: favorite)
-            self.companiesTableView.reloadData()
         }
         let hostingController = UIHostingController(rootView: nextView)
         hostingController.modalPresentationStyle = .fullScreen
         present(hostingController, animated: true, completion: nil)
+    }
+    
+    @objc private func refreshData() {
+        model.fetchStockData()
+        model.isFetchingEnded = { [weak self] in
+            DispatchQueue.main.async {
+                print("Data is loaded")
+                guard let self = self else { return }
+                self.companiesTableView.reloadData()
+                self.refresh.endRefreshing()
+            }
+        }
     }
 }
 
