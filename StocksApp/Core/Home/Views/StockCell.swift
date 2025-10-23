@@ -87,7 +87,7 @@ class StockCell: UITableViewCell {
     
     @objc private func favoriteButtonTapped() {
         guard let cellTicker = companyNameLabel.text else { return }
-        let favState = (favoriteButton.tintColor == .systemGray4) ? false : true
+        let favState = (favoriteButton.tintColor == .systemGray4) ? true : false
         delegate?.favoriteButtonTapped(of: cellTicker, favoriteState: favState)
     }
 
