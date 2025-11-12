@@ -7,11 +7,15 @@ Built with a **hybrid UIKit + SwiftUI** interface and powered by the **Finnhub A
 
 ## 🖼️ Preview
 
-<img src="https://github.com/user-attachments/assets/e5d5a6fe-883e-4028-8cf6-da9ee90bda64" width="300"/>
-<img src="https://github.com/user-attachments/assets/80dfd149-4fd1-46e7-8d67-a87fd2621550" width="300"/>
-<img src="https://github.com/user-attachments/assets/13e1d03b-5639-4932-98dc-e5cf7e323f0f" width="300"/>
-<img src="https://github.com/user-attachments/assets/c019bdff-5cba-477f-aa6a-b1215a3fc5be" width="300"/>
-<img src="https://github.com/user-attachments/assets/bcedaa50-3ac4-43a3-8b89-cc204fa3ebc3" width="300"/>
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/e5d5a6fe-883e-4028-8cf6-da9ee90bda64" width="250"/>
+  <img src="https://github.com/user-attachments/assets/80dfd149-4fd1-46e7-8d67-a87fd2621550" width="250"/>
+  <img src="https://github.com/user-attachments/assets/13e1d03b-5639-4932-98dc-e5cf7e323f0f" width="250"/>
+</p>
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/c019bdff-5cba-477f-aa6a-b1215a3fc5be" width="250"/>
+  <img src="https://github.com/user-attachments/assets/bcedaa50-3ac4-43a3-8b89-cc204fa3ebc3" width="250"/>
+</p>
 
 ---
 
