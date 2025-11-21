@@ -34,7 +34,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     // MARK: - Core Data stack
 
-    lazy var persistentContainer: NSPersistentContainer = {
+    lazy var persistentContainer: NSPersistentContainer = { // remove from AppDelegate -> to manager
         /*
          The persistent container for the application. This implementation
          creates and returns a container, having loaded the store for the
