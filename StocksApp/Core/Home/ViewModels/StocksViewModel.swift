@@ -5,18 +5,30 @@
 //  Created by Amankeldi Zhetkergen on 15.11.2024.
 //
 
-import UIKit
+import Foundation
 
-enum Caller {
-    case collectionView, tableView
+protocol StocksViewModelProtocol {
+    var onDataUpdated: (() -> Void)? { get set }
+
+    var tableStocks: [StockModel] { get }
+    var collectionStocks: [StockModel] { get }
+    
+    func tableStock(at index: Int) -> StockModel?
+    func collectionStock(at index: Int) -> StockModel?
+
+    func fetchStockData()
+    func setSearchQuery(_ query: String)
+    func clearSearch()
+    func setShowingFavorites(_ state: Bool)
+    func setFavorite(_ state: Bool, for ticker: String)
 }
 
-final class StocksViewModel {
-    private var listStocks: [StockModel] = []
+final class StocksViewModel: StocksViewModelProtocol {
+    private var allStocks: [StockModel] = []
     
-    var isFetchingEnded: (() -> Void)?
-    var isUserSearching: Bool = false
-    var showFavoriteStocks: Bool = false
+    var onDataUpdated: (() -> Void)?
+    private var isUserSearching: Bool = false
+    private var isShowingFavorites: Bool = false
     private var searchQuery: String = ""
 
     private let localJsonReader: LocalJsonReaderProtocol
@@ -32,81 +44,77 @@ final class StocksViewModel {
         self.priceInfoFetcher = priceInfoFetcher
         self.coreDataControl = coreDataControl
     }
+    
+    var tableStocks: [StockModel] {
+        filteredStocks
+    }
 
+    var collectionStocks: [StockModel] {
+        allStocks
+    }
+    
+    func tableStock(at index: Int) -> StockModel? {
+        guard index >= 0 && index < tableStocks.count else { return nil }
+        return tableStocks[index]
+    }
+
+    func collectionStock(at index: Int) -> StockModel? {
+        guard index >= 0 && index < tableStocks.count else { return nil }
+        return collectionStocks[index]
+    }
+    
     private var filteredStocks: [StockModel] {
         if isUserSearching {
-            return listStocks.filter {$0.name.lowercased().hasPrefix(searchQuery.lowercased())}
-        } else if showFavoriteStocks {
-            return listStocks.filter(\.favorite)
+            let query = searchQuery.lowercased()
+            return allStocks.filter {
+                $0.name.lowercased().hasPrefix(query) ||
+                $0.ticker.lowercased().hasPrefix(query)
+            }
+        } else if isShowingFavorites {
+            return allStocks.filter { $0.favorite }
         } else {
-            return listStocks
+            return allStocks
         }
     }
     
-    func getStocks(for caller: Caller) -> [StockModel] {
-        switch caller {
-            case .tableView:
-                return filteredStocks
-            case .collectionView:
-                return listStocks
-        }
-    }
-    
-    func getStock(at index: Int, for caller: Caller) -> StockModel {
-        switch caller {
-            case .tableView:
-                let stocks = filteredStocks
-                guard index >= 0 && index < stocks.count else {
-                    fatalError("Index out of bounds")
-                }
-                return stocks[index]
-            case .collectionView:
-                return listStocks[index]
-        }
-        
-    }
-    
-    func filterStocks(by query: String) {
+    func setSearchQuery(_ query: String) {
         searchQuery = query
         isUserSearching = !query.isEmpty
     }
     
-    func showFavoriteStocks(_ show: Bool) {
-        showFavoriteStocks = show
+    func clearSearch() {
+        searchQuery = ""
+        isUserSearching = false
+    }
+    
+    func setShowingFavorites(_ state: Bool) {
+        isShowingFavorites = state
     }
 
-    func favoriteButtonTapped(_ ticker: String, favorite: Bool) {
-        guard let index = listStocks.firstIndex(where: { $0.ticker == ticker })
-        else { return }
-        listStocks[index].favorite = favorite
-        if favorite {
+    func setFavorite(_ state: Bool, for ticker: String) {
+        guard let index = allStocks.firstIndex(where: { $0.ticker == ticker }) else {
+            print("Could not find a stock with given ticker")
+            return
+        }
+        allStocks[index].favorite = state
+        if state {
             coreDataControl.saveFavoriteTicker(ticker: ticker)
         } else {
             coreDataControl.removeFavoriteTicker(ticker: ticker)
         }
-    }
-    
-    func updateStockFavorite(ticker: String, favorite: Bool) {
-        guard let index = listStocks.firstIndex(where: { $0.ticker == ticker })
-        else {
-            print("error updating favorite")
-            return
-        }
-        listStocks[index].favorite = favorite
     }
 }
 
 extension StocksViewModel {
     func fetchStockData() {
         localJsonReader.fetchStocks { [weak self] result in
+            guard let self else { return }
             switch result {
             case .success(let profiles):
-                for profile in profiles {
-                    self?.listStocks.append((self?.createInitialStockModels(profile: profile))!)
-                }
-                self?.didAppLaunched()
-                self?.isFetchingEnded?()
-                self?.fetchPrice(profiles)
+                self.allStocks = profiles.map { self.makeStock(from: $0) }
+                self.restoreFavorites()
+                DispatchQueue.main.async{ self.onDataUpdated?() }
+                self.fetchPrice(profiles)
             case .failure(let error):
                 print(error)
             }
@@ -116,60 +124,71 @@ extension StocksViewModel {
     func fetchPrice(_ profiles: [StockProfilesModel]) {
         let lock = NSLock()
         let group = DispatchGroup()
+        
         for profile in profiles {
             group.enter()
-            priceInfoFetcher.fetchPriceInfo(of: profile.ticker) {
-                [weak self] result in
+            priceInfoFetcher.fetchPriceInfo(of: profile.ticker) { [weak self] result in
+                guard let self else {
+                    group.leave()
+                    return
+                }
                 switch result {
                     case .success(let output):
                         lock.lock()
-                        self?.addPriceInfoToStockModel(
-                        price: output.c, change: output.d, changePercent: output.dp,
-                        ticker: output.ticker)
+                        self.updateStockWithPrice(
+                            price: output.c,
+                            change: output.d,
+                            changePercent: output.dp,
+                            ticker: output.ticker
+                        )
                         lock.unlock()
                 case .failure(let error):
-                    print("!!! \(error)")
+                    print("!!! \(error.localizedDescription)")
                 }
                 group.leave()
             }
         }
+        
         group.notify(queue: .main) {
-            self.isFetchingEnded?()
+            self.onDataUpdated?()
         }
     }
     
-    func didAppLaunched() {
+    func restoreFavorites() {
         let tickers = coreDataControl.fetchFavoriteTickers()
-        if !tickers.isEmpty {
-            for ticker in tickers {
-                guard let index = listStocks.firstIndex(where: { $0.ticker == ticker })
-                else {
-                    return
+        guard !tickers.isEmpty else { return }
+        for ticker in tickers {
+                guard let index = allStocks.firstIndex(where: { $0.ticker == ticker }) else {
+                    continue
                 }
-                listStocks[index].favorite = true
+                allStocks[index].favorite = true
             }
-        }
     }
     
-    private func createInitialStockModels(profile: StockProfilesModel)
-        -> StockModel
-    {
+    private func makeStock(from: StockProfilesModel) -> StockModel {
         let model = StockModel(
-            ticker: profile.ticker, name: profile.name, logoString: profile.logo,
-            price: nil, change: nil,
-            changePercent: nil)
+                ticker: from.ticker,
+                name: from.name,
+                logoString: from.logo,
+                price: nil,
+                change: nil,
+                changePercent: nil
+            )
         return model
     }
 
-    private func addPriceInfoToStockModel(
-        price: Double, change: Double, changePercent: Double, ticker: String
+    private func updateStockWithPrice(
+        price: Double,
+        change: Double,
+        changePercent: Double,
+        ticker: String
     ) {
-        guard let index = listStocks.firstIndex(where: { $0.ticker == ticker })
+        guard let index = allStocks.firstIndex(where: { $0.ticker == ticker })
         else {
             return
         }
-        listStocks[index].price = price
-        listStocks[index].change = change
-        listStocks[index].changePercent = changePercent
+        allStocks[index].price = price
+        allStocks[index].change = change
+        allStocks[index].changePercent = changePercent
     }
 }

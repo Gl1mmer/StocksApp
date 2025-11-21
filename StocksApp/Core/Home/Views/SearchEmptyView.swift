@@ -7,6 +7,9 @@
 import UIKit
 
 final class SearchEmptyView: UIView {
+    
+    weak var delegate : StocksViewController?
+
     private let popularLabel: UILabel = {
         let label = UILabel()
         label.text = "Popular requests"
@@ -15,8 +18,6 @@ final class SearchEmptyView: UIView {
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
-    
-    weak var delegate : StocksViewController?
     
     private let popularStocksCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
@@ -50,7 +51,6 @@ final class SearchEmptyView: UIView {
         cv.showsHorizontalScrollIndicator = false
         return cv
     }()
-    
     
     init(delegate: StocksViewController) {
         super.init(frame: .zero)

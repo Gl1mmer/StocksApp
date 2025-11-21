@@ -10,7 +10,7 @@ import CoreData
 
 final class CoreDataControl {
     
-    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext // backgroundContext
 
     func fetchFavoriteTickers() -> [String] {
         do {

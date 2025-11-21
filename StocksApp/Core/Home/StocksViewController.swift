@@ -11,14 +11,18 @@ import SwiftUI
 final class StocksViewController: UIViewController {
     
     private let coreDataControl = CoreDataControl()
-    private lazy var model = StocksViewModel(localJsonReader: LocalJsonReader(), priceInfoFetcher: PriceInfoFetcherService(), coreDataControl: coreDataControl)
+    private lazy var model: StocksViewModelProtocol = StocksViewModel(localJsonReader: LocalJsonReader(), priceInfoFetcher: PriceInfoFetcherService(), coreDataControl: coreDataControl)
 
-    private let refresh = UIRefreshControl()
+    private lazy var refresh: UIRefreshControl = {
+        let refresh = UIRefreshControl()
+        refresh.addTarget(self, action: #selector(refreshData), for: .valueChanged)
+        return refresh
+    }()
 
     private let searchTextField = CustomSearchBar()
 
     private lazy var searchEmptyView = SearchEmptyView(delegate: self)
-        
+    
     private let companiesTableView: UITableView = {
         let tv = UITableView()
         tv.register(StockCell.self, forCellReuseIdentifier: StockCell.identifier)
@@ -80,34 +84,35 @@ final class StocksViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        tableViewDelegateConfiguration()
-        model.fetchStockData()
-        addSearchEmptyView()
-        model.isFetchingEnded = { [weak self] in
+        configureDelegates()
+        
+        model.onDataUpdated = { [weak self] in
             DispatchQueue.main.async {
                 guard let self = self else { return }
                 self.companiesTableView.reloadData()
+                self.refresh.endRefreshing()
             }
         }
-        companiesTableView.refreshControl = refresh
-        refresh.addTarget(self, action: #selector(refreshData), for: .valueChanged)
+        model.fetchStockData()
     }
     
     override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         companiesTableView.reloadData()
     }
 
     private func setupUI() {
         view.backgroundColor = .white
-
+        
         view.addSubview(searchTextField)
         view.addSubview(companiesTableView)
         view.addSubview(buttonsView)
         buttonsView.addSubview(stocksButton)
         buttonsView.addSubview(favouriteButton)
-                
-        searchTextField.delegate = self
+        addSearchEmptyView()
+        
         view.bringSubviewToFront(searchTextField)
+        companiesTableView.refreshControl = refresh
                 
         NSLayoutConstraint.activate([
             searchTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
@@ -159,70 +164,68 @@ final class StocksViewController: UIViewController {
         ])
     }
 
-    private func tableViewDelegateConfiguration() {
+    private func configureDelegates() {
         companiesTableView.delegate = self
         companiesTableView.dataSource = self
+        searchTextField.delegate = self
     }
     
-    @objc private func stocksButtonTapped() {
-        stocksButton.titleLabel?.font = .montserrat(.bold, size: 28)
-        stocksButton.setTitleColor(.black, for: .normal)
-        favouriteButton.titleLabel?.font = .montserrat(.bold, size: 18)
-        favouriteButton.setTitleColor(.systemGray4, for: .normal)
-        model.showFavoriteStocks(false)
-        companiesTableView.reloadData()
-    }
+    private enum Tab { case stocks, favourites }
 
-    @objc private func favouritesButtonTapped() {
-        favouriteButton.titleLabel?.font = .montserrat(.bold, size: 28)
-        favouriteButton.setTitleColor(.black, for: .normal)
-        stocksButton.titleLabel?.font = .montserrat(.bold, size: 18)
-        stocksButton.setTitleColor(.systemGray4, for: .normal)
-        model.showFavoriteStocks(true)
+    private func applyTab(_ tab: Tab) {
+        let isStocks = tab == .stocks
+
+        stocksButton.titleLabel?.font = .montserrat(.bold, size: isStocks ? 28 : 18)
+        stocksButton.setTitleColor(isStocks ? .black : .systemGray4, for: .normal)
+
+        favouriteButton.titleLabel?.font = .montserrat(.bold, size: isStocks ? 18 : 28)
+        favouriteButton.setTitleColor(isStocks ? .systemGray4 : .black, for: .normal)
+
+        model.setShowingFavorites(!isStocks)
         companiesTableView.reloadData()
     }
+    
+    @objc private func stocksButtonTapped() { applyTab(.stocks) }
+    @objc private func favouritesButtonTapped() { applyTab(.favourites) }
     
     private func openNextPage(_ stock: StockModel) {
-        let nextView = StockDetailsView(stock: stock, coreData: coreDataControl) { favorite in
-            self.model.updateStockFavorite(ticker: stock.ticker, favorite: favorite)
+        let nextView = StockDetailsView(stock: stock, coreData: coreDataControl) { [weak self] state in
+            self?.model.setFavorite(state, for: stock.ticker)
         }
         let hostingController = UIHostingController(rootView: nextView)
         hostingController.modalPresentationStyle = .fullScreen
         present(hostingController, animated: true, completion: nil)
     }
     
-    @objc private func refreshData() {
+    @objc
+    private func refreshData() {
         model.fetchStockData()
-        model.isFetchingEnded = { [weak self] in
-            DispatchQueue.main.async {
-                print("Data is loaded")
-                guard let self = self else { return }
-                self.companiesTableView.reloadData()
-                self.refresh.endRefreshing()
-            }
-        }
     }
 }
 
 extension StocksViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return model.getStocks(for: .tableView).count
+        return model.tableStocks.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: StockCell.identifier, for: indexPath) as? StockCell else {
             fatalError("Could not dequeue cell [1]")
         }
-        if let url = URL(string: model.getStock(at: indexPath.row, for: .tableView).logoString) {
+        guard let stock = model.tableStock(at: indexPath.row) else { return cell }
+        if let url = URL(string: stock.logoString) {
             cell.companySymbolImageView.loadImageFromURL(url: url)
         }
-        cell.configure(info: model.getStock(at: indexPath.row, for: .tableView), index: indexPath.row)
+        cell.configure(info: stock, index: indexPath.row)
         cell.delegate = self
         return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let stock = model.getStock(at: indexPath.row, for: .tableView)
+        guard let stock = model.tableStock(at: indexPath.row) else {
+            print("Could not find a stock at that index")
+            return
+        }
         openNextPage(stock)
         tableView.deselectRow(at: indexPath, animated: true)
         
@@ -235,17 +238,21 @@ extension StocksViewController: UITableViewDelegate, UITableViewDataSource {
 
 extension StocksViewController: UICollectionViewDelegate, UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return model.getStocks(for: .collectionView).count
+        return model.collectionStocks.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CustomCollectionViewCell.identifier, for: indexPath) as? CustomCollectionViewCell else { fatalError("Error dequeueing cell") }
-        cell.configure(model.getStock(at: indexPath.row, for: .collectionView).name)
+        guard let stock = model.collectionStock(at: indexPath.row) else { return cell }
+        cell.configure(stock.name)
         return cell
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let stock = model.getStock(at: indexPath.row, for: .collectionView)
+        guard let stock = model.collectionStock(at: indexPath.row) else {
+            print("Could not find a stock at that index")
+            return
+        }
         openNextPage(stock)
         collectionView.deselectItem(at: indexPath, animated: true)
     }
@@ -259,16 +266,14 @@ extension StocksViewController: UICollectionViewDelegateFlowLayout {
 
 extension StocksViewController: StockCellDelegate {
     func favoriteButtonTapped(of ticker: String, favoriteState: Bool) {
-        print("\(ticker) and \(favoriteState)")
-        model.updateStockFavorite(ticker: ticker, favorite: favoriteState)
+        model.setFavorite(favoriteState, for: ticker)
         companiesTableView.reloadData()
     }
 }
 
 extension StocksViewController: CustomSearchBarDelegate {
     func showSearchResults(for text: String) {
-        model.isUserSearching = true
-        model.filterStocks(by: text)
+        model.setSearchQuery(text)
         searchEmptyView.isHidden = true
         labelButtonView.isHidden = false
         companiesTableView.isHidden = false
@@ -276,11 +281,11 @@ extension StocksViewController: CustomSearchBarDelegate {
     }
     
     func didLeftButtonTapped() {
+        model.clearSearch()
         searchEmptyView.isHidden = true
         labelButtonView.isHidden = true
         companiesTableView.isHidden = false
         buttonsView.isHidden = false
-        model.isUserSearching = false
         companiesTableView.reloadData()
     }
     
